@@ -32,7 +32,7 @@
 #ifndef	_MXFE_H
 #define	_MXFE_H
 
-#ident	"@(#)mxfe.h	1.10	04/06/30 GED"
+#ident	"@(#)$Id: mxfe.h,v 1.2 2004/08/28 06:09:46 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -214,8 +214,8 @@ struct mxfe_ioc_pcireg {
 #define	MXFE_RX_ENABLE	0x00000002U	/* Enable receive */
 #define	MXFE_NAR_SCR	0x01000000U	/* scrambler mode */
 #define	MXFE_NAR_PCS	0x00800000U	/* set for forced 100 mbit */
-#define	MXFE_NAR_COE	0x00200000U	/* collision offset enable */
 #define	MXFE_NAR_SPEED	0x00400000U	/* transmit threshold, set for 10bt */
+#define	MXFE_NAR_COE	0x00200000U	/* collision offset enable */
 #define	MXFE_NAR_SF	0x00200000U	/* store and forward */
 #define	MXFE_NAR_HBD	0x00080000U	/* Disable SQE heartbeat */
 #define	MXFE_NAR_PORTSEL	0x00040000U	/* 1 = 100 mbit */

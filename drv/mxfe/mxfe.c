@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)mxfe.c	1.23	04/06/30 GED"
+#ident	"@(#)$Id: mxfe.c,v 1.2 2004/08/28 06:09:46 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -155,9 +155,7 @@ static int	mxfe_ndaddbytes(mblk_t *, char *, int);
 static int	mxfe_ndaddstr(mblk_t *, char *, int);
 static void	mxfe_ndparsestring(mblk_t *, char *, int);
 static int	mxfe_ndparselen(mblk_t *);
-#if 0
 static int	mxfe_ndparseint(mblk_t *);
-#endif
 static void	mxfe_ndget(mxfe_t *, queue_t *, mblk_t *);
 static void	mxfe_ndset(mxfe_t *, queue_t *, mblk_t *);
 static void	mxfe_ndfini(mxfe_t *);
@@ -250,9 +248,13 @@ static struct dev_ops mxfe_devops = {
 /*
  * Module linkage information.
  */
+#define	MXFE_IDENT	"MXFE Fast Ethernet"
+static char mxfe_ident[MODMAXNAMELEN];
+static char *mxfe_version;
+
 static struct modldrv mxfe_modldrv = {
 	&mod_driverops,			/* drv_modops */
-	"MXFE Fast Ethernet v1.23",	/* drv_linkinfo */
+	mxfe_ident,			/* drv_linkinfo */
 	&mxfe_devops			/* drv_dev_ops */
 };
 
@@ -305,6 +307,22 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
+	char	*rev = "$Revision";
+	char	*ident = mxfe_ident;
+
+        /* this technique works for both RCS and SCCS */
+	strcpy(ident, MXFE_IDENT " v");
+	ident += strlen(ident);
+	mxfe_version = ident;
+	while (*rev) {
+		if (strchr("0123456789.", *rev)) {
+			*ident = *rev;
+			ident++;
+			*ident = 0;
+		}
+		rev++;
+	}
+
 	return (mod_install(&mxfe_modlinkage));
 }
 
@@ -477,16 +495,52 @@ mxfe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	mxfep->mxfe_cardp = cardp;
 	mxfep->mxfe_phyaddr = -1;
 	mxfep->mxfe_cachesize = cachesize;
-	mxfep->mxfe_numbufs = ddi_getprop(DDI_DEV_T_ANY, dip,
-	    DDI_PROP_CANSLEEP, "buffers", MXFE_NUMBUFS);
-	mxfep->mxfe_txring = ddi_getprop(DDI_DEV_T_ANY, dip, DDI_PROP_CANSLEEP,
+	mxfep->mxfe_numbufs = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
+	    "buffers", MXFE_NUMBUFS);
+	mxfep->mxfe_txring = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
 	    "txdescriptors", MXFE_TXRING);
-	mxfep->mxfe_rxring = ddi_getprop(DDI_DEV_T_ANY, dip, DDI_PROP_CANSLEEP,
+	mxfep->mxfe_rxring = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
 	    "rxdescriptors", MXFE_RXRING);
-	mxfep->mxfe_forcespeed = ddi_getprop(DDI_DEV_T_ANY, mxfep->mxfe_dip,
-	    DDI_PROP_CANSLEEP, "speed", -1);
-	mxfep->mxfe_forceduplex = ddi_getprop(DDI_DEV_T_ANY, mxfep->mxfe_dip,
-	    DDI_PROP_CANSLEEP, "full-duplex", -1);
+
+        /* default properties */
+	mxfep->mxfe_adv_aneg = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
+	    "adv_autoneg_cap", 1);
+	mxfep->mxfe_adv_100T4 = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
+	    "adv_100T4_cap", 1);
+	mxfep->mxfe_adv_100fdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
+	    "adv_100fdx_cap", 1);
+	mxfep->mxfe_adv_100hdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
+	    "adv_100hdx_cap", 1);
+	mxfep->mxfe_adv_10fdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
+	    "adv_10fdx_cap", 1);
+	mxfep->mxfe_adv_10hdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
+	    "adv_10hdx_cap", 1);
+
+	/*
+	 * Legacy properties.  These override newer properties, only
+	 * for ease of implementation.
+	 */
+	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "speed", 0)) {
+	case 100:
+		mxfep->mxfe_adv_10fdx = 0;
+		mxfep->mxfe_adv_10hdx = 0;
+		break;
+	case 10:
+		mxfep->mxfe_adv_100fdx = 0;
+		mxfep->mxfe_adv_100hdx = 0;
+		break;
+	}
+
+	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "full-duplex", -1)) {
+	case 1:
+		mxfep->mxfe_adv_10hdx = 0;
+		mxfep->mxfe_adv_100hdx = 0;
+		break;
+	case 0:
+		mxfep->mxfe_adv_10fdx = 0;
+		mxfep->mxfe_adv_100fdx = 0;
+		break;
+	}
 
 	DBG(MXFE_DPCI, "PCI vendor id = %x", venid);
 	DBG(MXFE_DPCI, "PCI device id = %x", devid);
@@ -1262,11 +1316,36 @@ mxfe_startnway(mxfe_t *mxfep)
 		return;
 	}
 
+	if (mxfep->mxfe_adv_aneg == 0) {
+		/* not done for forced mode */
+		return;
+	}
+
 	nar = GETCSR(mxfep, MXFE_CSR_NAR);
+
 	restart = nar & (MXFE_TX_ENABLE | MXFE_RX_ENABLE);
 
 	/* enable scrambler mode - also disables tx/rx */
 	PUTCSR(mxfep, MXFE_CSR_NAR, MXFE_NAR_SCR);
+
+	nar = MXFE_NAR_SCR | MXFE_NAR_PCS | MXFE_NAR_HBD;
+	tctl = GETCSR(mxfep, MXFE_CSR_TCTL);
+	tctl &= ~(MXFE_TCTL_100FDX | MXFE_TCTL_100HDX | MXFE_TCTL_HDX);
+
+	if (mxfep->mxfe_adv_100fdx) {
+		tctl |= MXFE_TCTL_100FDX;
+	}
+	if (mxfep->mxfe_adv_100hdx) {
+		tctl |= MXFE_TCTL_100HDX;
+	}
+	if (mxfep->mxfe_adv_10fdx) {
+		nar |= MXFE_NAR_FDX | MXFE_TCTL_PWR;
+	}
+	if (mxfep->mxfe_adv_10hdx) {
+		tctl |= MXFE_TCTL_HDX | MXFE_TCTL_PWR;
+	}
+	tctl |= MXFE_TCTL_ANE;
+	tctl |= MXFE_TCTL_LTE | MXFE_TCTL_RSQ | MXFE_TCTL_PWR;
 
 	/* FIXME: possibly add store-and-forward */
 	nar = MXFE_NAR_SCR | MXFE_NAR_PCS | MXFE_NAR_HBD | MXFE_NAR_FDX;
@@ -1275,10 +1354,6 @@ mxfe_startnway(mxfe_t *mxfep)
 	/* possibly we should add in support for PAUSE frames */
 	DBG(MXFE_DPHY, "writing nar = 0x%x", nar);
 	PUTCSR(mxfep, MXFE_CSR_NAR, nar);
-
-	tctl = GETCSR(mxfep, MXFE_CSR_TCTL);
-	tctl |= MXFE_TCTL_100FDX | MXFE_TCTL_100HDX | MXFE_TCTL_HDX | \
-	    MXFE_TCTL_LTE | MXFE_TCTL_RSQ | MXFE_TCTL_PWR | MXFE_TCTL_ANE;
 
 	DBG(MXFE_DPHY, "writing tctl = 0x%x", tctl);
 	PUTCSR(mxfep, MXFE_CSR_TCTL, tctl);
@@ -1309,6 +1384,13 @@ mxfe_checklinknway(mxfe_t *mxfep)
 	tctl = GETCSR(mxfep, MXFE_CSR_TCTL);
 	lpar = MXFE_TSTAT_LPAR(tstat);
 
+	mxfep->mxfe_anlpar = lpar;
+	if (tstat & MXFE_TSTAT_LPN) {
+		mxfep->mxfe_aner |= MII_ANER_LPANA;
+	} else {
+		mxfep->mxfe_aner &= ~(MII_ANER_LPANA);
+	}
+
 	DBG(MXFE_DPHY, "nar(CSR6) = 0x%x", nar);
 	DBG(MXFE_DPHY, "tstat(CSR12) = 0x%x", tstat);
 	DBG(MXFE_DPHY, "tctl(CSR14) = 0x%x", tctl);
@@ -1317,8 +1399,10 @@ mxfe_checklinknway(mxfe_t *mxfep)
 	if ((tstat & MXFE_TSTAT_ANS) != MXFE_ANS_OK) {
 		/* autoneg did not complete */
 		nwayok = 0;
+		mxfep->mxfe_bmsr &= ~MII_BMSR_ANC;
 	} else {
 		nwayok = 1;
+		mxfep->mxfe_bmsr |= ~MII_BMSR_ANC;
 	}
 
 	if ((tstat & MXFE_TSTAT_100F) && (tstat & MXFE_TSTAT_10F)) {
@@ -1336,150 +1420,128 @@ mxfe_checklinknway(mxfe_t *mxfep)
 	 * if the link is newly up, then we might need to set various
 	 * mode bits, or negotiate for parameters, etc.
 	 */
-	switch (mxfep->mxfe_linkstate) {
-	case MXFE_NWAYCHECK:
+	if (mxfep->mxfe_adv_aneg) {
 
-		/* autoneg complete */
-		if (nwayok && (tstat & MXFE_TSTAT_LPN)) {
-			unsigned	newnar = nar;
-			unsigned	newtctl = tctl;
-
-			DBG(MXFE_DPHY, "NWay selected.");
-
-			/* deal with forced modes */
-			switch (mxfep->mxfe_forcespeed) {
-			case 10:
-				DBG(MXFE_DPHY, "forcing 10Mbit");
-				newtctl &= ~(MXFE_TCTL_100FDX |
-				    MXFE_TCTL_100HDX);
-				newnar &= ~MXFE_NAR_PCS;
-				break;
-			case 100:
-				DBG(MXFE_DPHY, "forcing 10Mbit");
-				newtctl &= ~MXFE_TCTL_HDX;
-				newnar &= ~MXFE_NAR_FDX;
-				break;
-			}
-
-			switch (mxfep->mxfe_forceduplex) {
-			case 1:
-				DBG(MXFE_DPHY, "forcing full-duplex");
-				newtctl &= ~(MXFE_TCTL_100HDX | MXFE_TCTL_HDX);
-				newnar |= MXFE_NAR_FDX;
-				break;
-			case 0:
-				DBG(MXFE_DPHY, "forcing half-duplex");
-				newtctl &= ~MXFE_TCTL_100FDX;
-				newnar &= ~MXFE_NAR_FDX;
-			}
-
-			if ((newnar != nar) || (newtctl != tctl)) {
-				/* something changed, write it out */
-				PUTCSR(mxfep, MXFE_CSR_TCTL, newtctl);
-				PUTCSR(mxfep, MXFE_CSR_NAR, newnar);
-
-				DBG(MXFE_DPHY, "redoing NWay for changes");
-				PUTCSR(mxfep, MXFE_CSR_TSTAT, MXFE_ANS_START);
-			}
-
-		} else {
-			int	progspeed = 10;
-
-			DBG(MXFE_DPHY, "partner does not NWay");
-			tctl &= ~(MXFE_TCTL_ANE);
-			if ((tstat & MXFE_TSTAT_100F) == 0) {
-				DBG(MXFE_DPHY, "detected 100Mbit link");
-				progspeed = 100;
-			} else if ((tstat & MXFE_TSTAT_10F) == 0) {
-				DBG(MXFE_DPHY, "detected 10Mbit link");
-				progspeed = 10;
-			}
-
-			if (mxfep->mxfe_forcespeed > 0) {
-				progspeed = mxfep->mxfe_forcespeed;
-			}
-
-			switch (progspeed) {
-			case 100:
-				DBG(MXFE_DPHY, "programming for 100Mbit");
-				nar |= MXFE_NAR_PCS | MXFE_NAR_PORTSEL;
-				break;
-			case 10:
-			default:
-				DBG(MXFE_DPHY, "programming for 10Mbit");
-				nar &= ~MXFE_NAR_PORTSEL;
-			}
-
-			if (mxfep->mxfe_forceduplex == 1) {
-				nar |= MXFE_NAR_FDX;
-			} else {
-				nar &= ~MXFE_NAR_FDX;
-			}
-
-			PUTCSR(mxfep, MXFE_CSR_TCTL, tctl);
-			PUTCSR(mxfep, MXFE_CSR_NAR, nar);
-		}
-
-		/* reschedule ourself to check in 5 secs again */
-		mxfep->mxfe_linkstate = MXFE_NWAYRENEG;
-		break;
-
-	case MXFE_NWAYRENEG:
-	default:
-		mxfep->mxfe_linkup = 1;
 		mxfep->mxfe_media = GLDM_TP;
-		if (((tstat & MXFE_TSTAT_ANS) == MXFE_ANS_OK) &&
-		    (tstat & MXFE_TSTAT_LPN) && (tctl & MXFE_TCTL_ANE)) {
-			/* autonegotiated status */
-			if ((tctl & MXFE_TCTL_100FDX) &&
-			    (lpar & MII_ANEG_100FDX)) {
+		mxfep->mxfe_linkup = 1;
+
+		if (tstat & MXFE_TSTAT_LPN) {
+			/* partner has NWay */
+
+			if ((mxfep->mxfe_anlpar & MII_ANEG_100FDX) &&
+			    mxfep->mxfe_adv_100fdx) {
 				mxfep->mxfe_ifspeed = 100000000;
 				mxfep->mxfe_duplex = GLD_DUPLEX_FULL;
-			} else if ((tctl & MXFE_TCTL_100HDX) &&
-			    (lpar & MII_ANEG_100HDX)) {
+			} else if ((mxfep->mxfe_anlpar & MII_ANEG_100HDX) &&
+			    mxfep->mxfe_adv_100hdx) {
 				mxfep->mxfe_ifspeed = 100000000;
 				mxfep->mxfe_duplex = GLD_DUPLEX_HALF;
-			} else if ((nar &  MXFE_NAR_FDX) &&
-			    (lpar & MII_ANEG_10FDX)) {
+			} else if ((mxfep->mxfe_anlpar & MII_ANEG_10FDX) &&
+			    mxfep->mxfe_adv_10fdx) {
 				mxfep->mxfe_ifspeed = 10000000;
 				mxfep->mxfe_duplex = GLD_DUPLEX_FULL;
-			} else if ((tctl & MXFE_TCTL_HDX) &&
-			    (lpar & MII_ANEG_10HDX)) {
+			} else if ((mxfep->mxfe_anlpar & MII_ANEG_10HDX) &&
+			    mxfep->mxfe_adv_10hdx) {
 				mxfep->mxfe_ifspeed = 10000000;
 				mxfep->mxfe_duplex = GLD_DUPLEX_HALF;
 			} else {
+				mxfep->mxfe_media = GLDM_UNKNOWN;
 				mxfep->mxfe_ifspeed = 0;
-				mxfep->mxfe_duplex = GLD_DUPLEX_UNKNOWN;
 			}
-		} else if (((tstat & MXFE_TSTAT_ANS) == MXFE_ANS_OK) &&
-		    ((tstat & MXFE_TSTAT_LPN) == 0)) {
-			/* autonegotiation failed, fall back to 10HDX */
-			mxfep->mxfe_ifspeed = 10000000;
+		} else {
+			/* link partner does not have NWay */
+			/* we just assume half duplex, since we can't
+			 * detect it! */
 			mxfep->mxfe_duplex = GLD_DUPLEX_HALF;
-		} else if ((tstat & MXFE_TSTAT_ANS) == 0) {
-			/* forced mode, default to 10HDX */
-			mxfep->mxfe_ifspeed = 10000000;
-			mxfep->mxfe_duplex = GLD_DUPLEX_HALF;
-			if (nar & MXFE_NAR_PORTSEL) {
-				/* forced to 100 mbps */
+			if (!(tstat & MXFE_TSTAT_100F)) {
+				DBG(MXFE_DPHY, "Partner doesn't have NWAY");
 				mxfep->mxfe_ifspeed = 100000000;
-			}
-			if (nar & MXFE_NAR_FDX) {
-				/* forced to full duplex */
-				mxfep->mxfe_duplex = GLD_DUPLEX_FULL;
+			} else {
+				mxfep->mxfe_ifspeed = 10000000;
 			}
 		}
-		mxfe_reportlink(mxfep);
-		mxfep->mxfe_linkstate = MXFE_GOODLINK;
-		break;
+	} else {
+		/* forced modes */
+		mxfep->mxfe_media = GLDM_TP;
+		mxfep->mxfe_linkup = 1;
+		if (mxfep->mxfe_adv_100fdx) {
+			mxfep->mxfe_ifspeed = 100000000;
+			mxfep->mxfe_duplex = GLD_DUPLEX_FULL;
+		} else if (mxfep->mxfe_adv_100hdx) {
+			mxfep->mxfe_ifspeed = 100000000;
+			mxfep->mxfe_duplex = GLD_DUPLEX_HALF;
+		} else if (mxfep->mxfe_adv_10fdx) {
+			mxfep->mxfe_ifspeed = 10000000;
+			mxfep->mxfe_duplex = GLD_DUPLEX_FULL;
+		} else if (mxfep->mxfe_adv_10hdx) {
+			mxfep->mxfe_ifspeed = 10000000;
+			mxfep->mxfe_duplex = GLD_DUPLEX_HALF;
+		} else {
+			mxfep->mxfe_ifspeed = 0;
+		}
 	}
+	mxfe_reportlink(mxfep);
+	mxfep->mxfe_linkstate = MXFE_GOODLINK;
 }
 
 static void
 mxfe_phyinitnway(mxfe_t *mxfep)
 {
 	mxfep->mxfe_linkstate = MXFE_NOLINK;
-	mxfe_startnway(mxfep);
+	mxfep->mxfe_bmsr = MII_BMSR_ANA | MII_BMSR_100FDX | MII_BMSR_100HDX |
+	    MII_BMSR_10FDX | MII_BMSR_10HDX;
+
+	/* 100-T4 not supported with NWay */
+	mxfep->mxfe_adv_100T4 = 0;
+
+	/* make sure at least one valid mode is selected */
+	if ((!mxfep->mxfe_adv_100fdx) &&
+	    (!mxfep->mxfe_adv_100hdx) &&
+	    (!mxfep->mxfe_adv_10fdx) &&
+	    (!mxfep->mxfe_adv_10hdx)) {
+		mxfe_error(mxfep->mxfe_dip, "No valid link mode selected.");
+		mxfe_error(mxfep->mxfe_dip,
+		    "Falling back to 10 Mbps Half-Duplex mode.");
+		mxfep->mxfe_adv_10hdx = 1;
+	}
+
+	if (mxfep->mxfe_adv_aneg == 0) {
+		/* forced mode */
+		unsigned	restart;
+		unsigned	nar;
+		unsigned	tctl;
+		nar = GETCSR(mxfep, MXFE_CSR_NAR);
+		tctl = GETCSR(mxfep, MXFE_CSR_TCTL);
+
+		restart = nar & (MXFE_TX_ENABLE | MXFE_RX_ENABLE);
+		nar &= ~(MXFE_TX_ENABLE | MXFE_RX_ENABLE);
+
+		nar &= ~(MXFE_NAR_FDX | MXFE_NAR_PORTSEL | MXFE_NAR_SCR |
+		    MXFE_NAR_SPEED);
+		tctl &= ~MXFE_TCTL_ANE;
+		if (mxfep->mxfe_adv_100fdx) {
+			nar |= MXFE_NAR_PORTSEL | MXFE_NAR_PCS | MXFE_NAR_SCR;
+			nar |= MXFE_NAR_FDX;
+		} else if (mxfep->mxfe_adv_100hdx) {
+			nar |= MXFE_NAR_PORTSEL | MXFE_NAR_PCS | MXFE_NAR_SCR;
+		} else if (mxfep->mxfe_adv_10fdx) {
+			nar |= MXFE_NAR_FDX | MXFE_NAR_SPEED;
+		} else { /* mxfep->mxfe_adv_10hdx */
+			nar |= MXFE_NAR_SPEED;
+		}
+
+		PUTCSR(mxfep, MXFE_CSR_NAR, nar);
+		PUTCSR(mxfep, MXFE_CSR_TCTL, tctl);
+		if (restart) {
+			nar |= restart;
+			PUTCSR(mxfep, MXFE_CSR_NAR, nar);
+		}
+		/* Macronix initializations from Bolo Tsai */
+		PUTCSR(mxfep, MXFE_CSR_MXMAGIC, 0x0b2c0000);
+		PUTCSR(mxfep, MXFE_CSR_ACOMP, 0x11000);
+	} else {
+		mxfe_startnway(mxfep);
+	}
 	PUTCSR(mxfep, MXFE_CSR_TIMER, MXFE_TIMER_LOOP |
 	    (MXFE_LINKTIMER * 1000 / MXFE_TIMER_USEC));
 }
@@ -1497,6 +1559,9 @@ mxfe_phyinitmii(mxfe_t *mxfep)
 	unsigned	phyidr1;
 	unsigned	phyidr2;
 	int		retries;
+	int		force;
+	int		cnt;
+	int		validmode;
 
 	mxfep->mxfe_phyaddr = -1;
 
@@ -1549,85 +1614,128 @@ mxfe_phyinitmii(mxfe_t *mxfep)
 	bmcr = mxfe_miiread(mxfep, phyaddr, MII_REG_BMCR);
 	anar = mxfe_miiread(mxfep, phyaddr, MII_REG_ANAR);
 
-	/*
-	 * Clear the feature bits for now, we turn them back on
-	 * selectively below.
-	 */
-	bmcr = 0;
+	anar &= ~(MII_ANEG_100BT4 | MII_ANEG_100FDX | MII_ANEG_100HDX |
+	    MII_ANEG_10FDX | MII_ANEG_10HDX);
 
-	switch (mxfep->mxfe_forcespeed) {
-	case 100:
-		anar &= ~(MII_ANEG_10FDX | MII_ANEG_10HDX);
-		bmcr |= MII_BMCR_SPEED;
-		break;
-	case 10:
-		anar &= ~(MII_ANEG_100FDX | MII_ANEG_100HDX);
-		bmcr &= ~MII_BMCR_SPEED;
-		break;
-	case -1:
-		break;
-	default:
-		mxfep->mxfe_forcespeed = -1;
-		mxfe_error(mxfep->mxfe_dip, "unknown link speed requested.");
-		break;
+	force = 0;
+	validmode = 0;
+
+	/* disable modes not supported in hardware */
+	if (!(bmsr & MII_BMSR_100BT4)) {
+		mxfep->mxfe_adv_100T4 = 0;
+	} else {
+		validmode = MII_ANEG_100BT4;
 	}
-
-	switch (mxfep->mxfe_forceduplex) {
-	case 0:
-		/* half duplex */
-		anar &= ~(MII_ANEG_10FDX | MII_ANEG_100FDX);
-		bmcr &= ~MII_BMCR_DUPLEX;
-		break;
-	case 1:
-		/* full duplex */
-		anar &= ~(MII_ANEG_10HDX | MII_ANEG_100HDX);
-		bmcr |= MII_BMCR_DUPLEX;
-		break;
-	case -1:
-		break;
-	default:
-		mxfep->mxfe_forceduplex = -1;
-		mxfe_error(mxfep->mxfe_dip, "unknown link duplex requested.");
-		break;
-	}
-
-	/* set autonegotiation bits */
-	if ((mxfep->mxfe_forcespeed < 0) && (mxfep->mxfe_forceduplex < 0)) {
-		anar |= (MII_ANEG_10HDX | MII_ANEG_10FDX | MII_ANEG_100HDX |
-		    MII_ANEG_100FDX);
-		bmcr |= (MII_BMCR_ANEG | MII_BMCR_RANEG);
-	}
-
-	/* disable modes the card doesn't support */
 	if (!(bmsr & MII_BMSR_100FDX)) {
-		anar &= ~MII_ANEG_100FDX;
+		mxfep->mxfe_adv_100fdx = 0;
+	} else {
+		validmode = MII_ANEG_100FDX;
 	}
 	if (!(bmsr & MII_BMSR_100HDX)) {
-		anar &= ~MII_ANEG_100HDX;
+		mxfep->mxfe_adv_100hdx = 0;
+	} else {
+		validmode = MII_ANEG_100HDX;
 	}
 	if (!(bmsr & MII_BMSR_10FDX)) {
-		anar &= ~MII_ANEG_10FDX;
+		mxfep->mxfe_adv_10fdx = 0;
+	} else {
+		validmode = MII_ANEG_10FDX;
 	}
 	if (!(bmsr & MII_BMSR_10HDX)) {
-		anar &= ~MII_ANEG_10HDX;
-	}
-	if (!(bmsr & (MII_BMSR_100FDX|MII_BMSR_100HDX))) {
-		bmcr &= ~MII_BMCR_SPEED;
-	}
-	if (!(bmsr & (MII_BMSR_100FDX|MII_BMSR_10FDX))) {
-		bmcr &= ~MII_BMCR_DUPLEX;
+		mxfep->mxfe_adv_10hdx = 0;
+	} else {
+		validmode = MII_ANEG_10HDX;
 	}
 	if (!(bmsr & MII_BMSR_ANA)) {
-		/* card doesn't support autonegotiation */
-		bmcr &= ~(MII_BMCR_ANEG|MII_BMCR_RANEG);
+		mxfep->mxfe_adv_aneg = 0;
+		force = 1;
 	}
+
+	cnt = 0;
+        if (mxfep->mxfe_adv_100T4) {
+                anar |= MII_ANEG_100BT4;
+                cnt++;
+        }
+        if (mxfep->mxfe_adv_100fdx) {
+                anar |= MII_ANEG_100FDX;
+                cnt++;
+        }
+        if (mxfep->mxfe_adv_100hdx) {
+                anar |= MII_ANEG_100HDX;
+                cnt++;
+        }
+        if (mxfep->mxfe_adv_10fdx) {
+                anar |= MII_ANEG_10FDX;
+                cnt++;
+        }
+        if (mxfep->mxfe_adv_10hdx) {
+                anar |= MII_ANEG_10HDX;
+                cnt++;
+        }
+
+	/*
+	 * Make certain at least one valid link mode is selected.
+	 */
+	if (!cnt) {
+		char	*s;
+		mxfe_error(mxfep->mxfe_dip, "No valid link mode selected.");
+		switch (validmode) {
+		case MII_ANEG_100BT4:
+			s = "100 Base T4";
+			mxfep->mxfe_adv_100T4 = 1;
+			break;
+		case MII_ANEG_100FDX:
+			s = "100 Mbps Full-Duplex";
+			mxfep->mxfe_adv_100fdx = 1;
+			break;
+		case MII_ANEG_100HDX:
+			s = "100 Mbps Half-Duplex";
+			mxfep->mxfe_adv_100hdx = 1;
+			break;
+		case MII_ANEG_10FDX:
+			s = "10 Mbps Full-Duplex";
+			mxfep->mxfe_adv_10fdx = 1;
+			break;
+		case MII_ANEG_10HDX:
+			s = "10 Mbps Half-Duplex";
+			mxfep->mxfe_adv_10hdx = 1;
+			break;
+		default:
+			s = "unknown";
+			break;
+		}
+		anar |= validmode;
+		mxfe_error(mxfep->mxfe_dip, "Falling back to %s mode.", s);
+	}
+
+	if ((mxfep->mxfe_adv_aneg) && (bmsr & MII_BMSR_ANA)) {
+		DBG(MXFE_DPHY, "using autoneg mode");
+		bmcr = (MII_BMCR_ANEG | MII_BMCR_RANEG);
+	} else {
+		DBG(MXFE_DPHY, "using forced mode");
+		force = 1;
+		if (mxfep->mxfe_adv_100fdx) {
+			bmcr = (MII_BMCR_SPEED | MII_BMCR_DUPLEX);
+		} else if (mxfep->mxfe_adv_100hdx) {
+			bmcr = MII_BMCR_SPEED;
+		} else if (mxfep->mxfe_adv_10fdx) {
+			bmcr = MII_BMCR_DUPLEX;
+		} else {
+			/* 10HDX */
+			bmcr = 0;
+		}
+	}
+
+	mxfep->mxfe_forcephy = 0;
 
 	DBG(MXFE_DPHY, "programming anar to 0x%x", anar);
 	mxfe_miiwrite(mxfep, phyaddr, MII_REG_ANAR, anar);
-	DBG(MXFE_DPHY, "programming bmcr to 0x%x", anar);
-	mxfe_miiwrite(mxfep, phyaddr, MII_REG_ANAR, bmcr);
+	DBG(MXFE_DPHY, "programming bmcr to 0x%x", bmcr);
+	mxfe_miiwrite(mxfep, phyaddr, MII_REG_BMCR, bmcr);
 
-	/* schedule a query of the link status */
+	/*
+	 * schedule a query of the link status
+	 */
 	PUTCSR(mxfep, MXFE_CSR_TIMER, MXFE_TIMER_LOOP |
 	    (MXFE_LINKTIMER * 1000 / MXFE_TIMER_USEC));
 }
@@ -1635,7 +1743,6 @@ mxfe_phyinitmii(mxfe_t *mxfep)
 static void
 mxfe_reportlink(mxfe_t *mxfep)
 {
-	int forced = 0;
 	int changed = 0;
 
 	if (mxfep->mxfe_ifspeed != mxfep->mxfe_lastifspeed) {
@@ -1646,18 +1753,31 @@ mxfe_reportlink(mxfe_t *mxfep)
 		mxfep->mxfe_lastduplex = mxfep->mxfe_duplex;
 		changed++;
 	}
-	if ((mxfep->mxfe_forcespeed >= 0) && (mxfep->mxfe_forceduplex >= 0)) {
-		forced = 1;
-	}
 	if (mxfep->mxfe_linkup && changed) {
+		char *media;
+		switch (mxfep->mxfe_media) {
+		case GLDM_TP:
+			media = "Twisted Pair";
+			break;
+		case GLDM_PHYMII:
+			media = "MII";
+			break;
+		case GLDM_FIBER:
+			media = "Fiber";
+			break;
+		default:
+			media = "Unknown";
+			break;
+		}
 		cmn_err(CE_NOTE, mxfep->mxfe_ifspeed ?
-		    "%s%d: %s %d Mbps %s-Duplex Link Up" :
+		    "%s%d: %s %d Mbps %s-Duplex (%s) Link Up" :
 		    "%s%d: Unknown %s MII Link Up",
 		    ddi_driver_name(mxfep->mxfe_dip),
 		    ddi_get_instance(mxfep->mxfe_dip),
-		    forced ? "Forced" : "Auto-Negotiated",
+		    mxfep->mxfe_forcephy ? "Forced" : "Auto-Negotiated",
 		    (int)(mxfep->mxfe_ifspeed / 1000000),
-		    mxfep->mxfe_duplex == GLD_DUPLEX_FULL ? "Full" : "Half");
+		    mxfep->mxfe_duplex == GLD_DUPLEX_FULL ? "Full" : "Half",
+		    media);
 		mxfep->mxfe_lastlinkdown = 0;
 	} else if (mxfep->mxfe_linkup) {
 		mxfep->mxfe_lastlinkdown = 0;
@@ -1692,6 +1812,7 @@ mxfe_checklinkmii(mxfe_t *mxfep)
 	ushort 		bmcr;
 	ushort 		anar;
 	ushort 		anlpar;
+	ushort 		aner;
 
 	mxfep->mxfe_media = GLDM_PHYMII;
 
@@ -1701,6 +1822,11 @@ mxfe_checklinkmii(mxfe_t *mxfep)
 	bmcr = mxfe_miiread(mxfep, mxfep->mxfe_phyaddr, MII_REG_BMCR);
 	anar = mxfe_miiread(mxfep, mxfep->mxfe_phyaddr, MII_REG_ANAR);
 	anlpar = mxfe_miiread(mxfep, mxfep->mxfe_phyaddr, MII_REG_ANLPAR);
+	aner = mxfe_miiread(mxfep, mxfep->mxfe_phyaddr, MII_REG_ANER);
+
+	mxfep->mxfe_bmsr = bmsr;
+	mxfep->mxfe_anlpar = anlpar;
+	mxfep->mxfe_aner = aner;
 
 	if (bmsr & MII_BMSR_RFAULT) {
 		mxfe_error(mxfep->mxfe_dip, "Remote fault detected.");
@@ -3324,7 +3450,6 @@ mxfe_ndparselen(mblk_t *mp)
 	return (len);
 }
 
-#if 0
 static int
 mxfe_ndparseint(mblk_t *mp)
 {
@@ -3351,7 +3476,6 @@ mxfe_ndparseint(mblk_t *mp)
 	}
 	return (val);
 }
-#endif
 
 static void
 mxfe_ndparsestring(mblk_t *mp, char *buf, int maxlen)
@@ -3440,6 +3564,48 @@ mxfe_ndgetstring(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
 	return (mxfe_ndaddstr(mp, s ? s : "", 1));
 }
 
+static int
+mxfe_ndgetbit(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
+{
+	unsigned        val;
+	unsigned        mask;
+
+	val = *(unsigned *)ndp->nd_arg1;
+	mask = (unsigned)ndp->nd_arg2;
+
+        return (mxfe_ndaddstr(mp, val & mask ? "1" : "0", 1));
+
+}
+
+static int
+mxfe_ndgetadv(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
+{
+	unsigned	val;
+
+	mutex_enter(&mxfep->mxfe_xmtlock);
+	val = *((unsigned *)ndp->nd_arg1);
+	mutex_exit(&mxfep->mxfe_xmtlock);
+
+	return (mxfe_ndaddstr(mp, val ? "1" : "0", 1));
+}
+
+static int
+mxfe_ndsetadv(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
+{
+	unsigned	*ptr = (unsigned *)ndp->nd_arg1;
+
+	mutex_enter(&mxfep->mxfe_xmtlock);
+
+	*ptr = (mxfe_ndparseint(mp) ? 1 : 0);
+	/* now reset the phy */
+	if ((mxfep->mxfe_flags & MXFE_SUSPENDED) == 0) {
+		mxfe_phyinit(mxfep);
+	}
+	mutex_exit(&mxfep->mxfe_xmtlock);
+
+	return (0);
+}
+
 static void
 mxfe_ndfini(mxfe_t *mxfep)
 {
@@ -3461,25 +3627,44 @@ mxfe_ndinit(mxfe_t *mxfep)
 	mxfe_ndadd(mxfep, "link_speed", mxfe_ndgetlinkspeed, NULL, 0, 0);
 	mxfe_ndadd(mxfep, "link_mode", mxfe_ndgetlinkmode, NULL, 0, 0);
 	mxfe_ndadd(mxfep, "driver_version", mxfe_ndgetstring, NULL,
-	    (intptr_t)"1.23", 0);
-	mxfe_ndadd(mxfep, "adv_autoneg_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "adv_100T4_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "adv_100fdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "adv_100hdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "adv_10fdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "adv_10hdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "autoneg_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "100T4_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "100fdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "100hdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "10fdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "10hdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "lp_autoneg_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "lp_100T4_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "lp_100fdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "lp_100hdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "lp_10fdx_cap", NULL, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "lp_10hdx_cap", NULL, NULL, 0, 0);
+	    (intptr_t)mxfe_version, 0);
+	mxfe_ndadd(mxfep, "adv_autoneg_cap", mxfe_ndgetadv, mxfe_ndsetadv,
+	    (intptr_t)mxfep->mxfe_adv_aneg, 0);
+	mxfe_ndadd(mxfep, "adv_100T4_cap", mxfe_ndgetadv, mxfe_ndsetadv,
+	    (intptr_t)mxfep->mxfe_adv_100T4, 0);
+	mxfe_ndadd(mxfep, "adv_100fdx_cap", mxfe_ndgetadv, mxfe_ndsetadv,
+	    (intptr_t)mxfep->mxfe_adv_100fdx, 0);
+	mxfe_ndadd(mxfep, "adv_100hdx_cap", mxfe_ndgetadv, mxfe_ndsetadv,
+	    (intptr_t)mxfep->mxfe_adv_100hdx, 0);
+	mxfe_ndadd(mxfep, "adv_10fdx_cap",  mxfe_ndgetadv, mxfe_ndsetadv,
+	    (intptr_t)mxfep->mxfe_adv_10fdx, 0);
+	mxfe_ndadd(mxfep, "adv_10hdx_cap",  mxfe_ndgetadv, mxfe_ndsetadv,
+	    (intptr_t)mxfep->mxfe_adv_10hdx, 0);
+	mxfe_ndadd(mxfep, "autoneg_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_bmsr, MII_BMSR_ANA);
+	mxfe_ndadd(mxfep, "100T4_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_bmsr, MII_BMSR_100BT4);
+	mxfe_ndadd(mxfep, "100fdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_bmsr, MII_BMSR_100FDX);
+	mxfe_ndadd(mxfep, "100hdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_bmsr, MII_BMSR_100HDX);
+	mxfe_ndadd(mxfep, "10fdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_bmsr, MII_BMSR_10FDX);
+	mxfe_ndadd(mxfep, "10hdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_bmsr, MII_BMSR_10HDX);
+	/* XXX: this needs ANER */
+	mxfe_ndadd(mxfep, "lp_autoneg_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_aner, MII_ANER_LPANA);
+	mxfe_ndadd(mxfep, "lp_100T4_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_100BT4);
+	mxfe_ndadd(mxfep, "lp_100fdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_100FDX);
+	mxfe_ndadd(mxfep, "lp_100hdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_100HDX);
+	mxfe_ndadd(mxfep, "lp_10fdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_10HDX);
+	mxfe_ndadd(mxfep, "lp_10hdx_cap", mxfe_ndgetbit, NULL,
+	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_10HDX);
 }
 
 /*

@@ -1,11 +1,11 @@
 <!DOCTYPE REFENTRY PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
 ]>
-<!-- @(#)mxfe.7d.in 1.17 04/06/30 GED -->
+<!-- @(#)$Id: mxfe.7d.in,v 1.2 2004/08/28 06:09:46 gdamore Exp $ -->
 <refentry id="mxfe-7d">
 <refmeta>
 	<refentrytitle>mxfe</refentrytitle>
 	<manvolnum>7D</manvolnum>
-	<refmiscinfo class="date">30 June 2004</refmiscinfo>
+	<refmiscinfo class="date">27 August 2004</refmiscinfo>
 	<refmiscinfo class="sectdesc">Drivers</refmiscinfo>
 	<refmiscinfo class="software">%PKG% %VERSION%</refmiscinfo>
 	<refmiscinfo class="arch">generic</refmiscinfo>
@@ -61,36 +61,58 @@ SAP zero (the 802.3 SAP).</para>
 
 <refsect1><title>PROPERTIES</title>
 <variablelist termlength="medium">
-<varlistentry><term><literal>full-duplex</literal></term>
-<listitem><para>Specifies full-duplex operation (when set to one) or half-duplex
-operation (when set to zero).  If not specified, then IEEE 802.3u
-autonegotiation is used to determine the link duplex mode.
+<varlistentry><term><literal>adv_autoneg_cap</literal></term>
+<listitem><para>Enables (default) or disables IEEE 802.3u
+autonegotiation of link speed and duplex settings.  If enabled, the
+device will negotiate among the supported (and configured, see below)
+link options with the link partner.  If disabled, then at least one of
+the link options below must be specified; the driver will select the
+first enabled link option according to the IEEE 802.3u specified
+preferences.  </para></listitem></varlistentry>
+
+<varlistentry><term><literal>adv_100T4_cap</literal></term>
+<listitem><para>Enables the 100 BaseT4 link option.  (Note that most
+hardware does not support this unusual link style.  Also, this
+uses two pairs of wires for data, rather than just one.)
 </para></listitem></varlistentry>
 
-<varlistentry><term><literal>speed</literal></term>
-<listitem><para>Specifies the speed to be selected in Mbps (either 10 or 100).
-If not specified, then IEEE 802.3u autonegotiation is used to determine
-the link speed.
+<varlistentry><term><literal>adv_100fdx_cap</literal></term>
+<listitem><para>Enables the 100 Base TX full-duplex link option.
+(This will generally be the fastest mode, if both link partners
+support it.  Most modern equipment will support this mode.)
 </para></listitem></varlistentry>
+
+<varlistentry><term><literal>adv_100hdx_cap</literal></term>
+<listitem><para>Enables the 100 Base TX half-duplex link option.
+(This is typically used when the link partner is a 100 Mbps hub.)
+</para></listitem></varlistentry>
+
+<varlistentry><term><literal>adv_10fdx_cap</literal></term>
+<listitem><para>Enables the 10 Base-T full-duplex link option.  (This
+less-frequently used mode is typically used when the link partner is a
+10 Mbps switch.)  </para></listitem></varlistentry>
+
+<varlistentry><term><literal>adv_10hdx_cap</literal></term>
+<listitem><para>Enables the 10 Base-T half-duplex link option.  (This
+is the fall-back when no other option is available.  It is typically
+used when the link partner is a 10 Mbps hub, or is an older network
+card.)  </para></listitem></varlistentry>
 
 </variablelist>
 </refsect1>
 
 <refsect1><title>SUPPORTED CARDS</title>
 <para>Please see the web site at
-<literal>http://garrett.damore.org/software/ethernet/</literal>
+<literal>http://sol-enet.sourceforege.net/</literal>
 for the most current list of supported and tested controllers and cards.
 </para>
 </refsect1>
 
 <refsect1><title>BUGS AND LIMITATIONS</title>
 	<itemizedlist mark="bullet">
-	<listitem><para>Performance is not optimized.</para></listitem>
+	<listitem><para>Performance is not as optimized as it could be.
+(Zero-copy DMA is not used.)</para></listitem>
 	<listitem><para>Power management is not supported.</para></listitem>
-	<listitem><para>Suspend/Resume functionality is not tested.</para>
-</listitem>
-	<listitem><para>PCI hot plug and Dynamic Reconfiguration is
- not tested.</para></listitem>
 	</itemizedlist>
 </refsect1>
 
@@ -108,13 +130,13 @@ for the most current list of supported and tested controllers and cards.
 <refsect1><title>GETTING IT</title>
 <para>
 The latest version of this driver is available via HTTP access
-at <literal>http://garrett.damore.org/software/ethernet/</literal>.
+at <literal>http://sol-enet.sourceforge.net/</literal>.
 </para>
 </refsect1>
 
 <refsect1><title>COPYRIGHT</title>
 <para>
-Copyright (c) 2001-2002 by Garrett D'Amore
+Copyright (c) 2001-2004 by Garrett D'Amore
 &lt;<literal>garrett@damore.org</literal>&gt;.
 All rights reserved.
 </para>

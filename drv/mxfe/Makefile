@@ -1,5 +1,5 @@
 #
-# ident	"@(#)Makefile	1.4	03/06/03 GED"
+# $Id: Makefile,v 1.2 2004/08/28 06:09:46 gdamore Exp $
 #
 # drv/mxfe/Makefile
 #

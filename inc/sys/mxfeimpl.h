@@ -32,7 +32,7 @@
 #ifndef	_MXFEIMPL_H
 #define	_MXFEIMPL_H
 
-#ident	"@(#)mxfeimpl.h	1.10	04/06/30 GED"
+#ident	"@(#)$Id: mxfeimpl.h,v 1.2 2004/08/28 06:09:46 gdamore Exp $"
 
 #ifdef	_KERNEL
 
@@ -106,14 +106,6 @@ struct mxfe {
 	int			mxfe_lastlinkdown;
 	u_longlong_t		mxfe_lastifspeed;
 	int			mxfe_lastduplex;
-	int			mxfe_adv_aneg;
-	int			mxfe_adv_100T4;
-	int			mxfe_adv_100fdx;
-	int			mxfe_adv_100hdx;
-	int			mxfe_adv_10fdx;
-	int			mxfe_adv_10hdx;
-	int			mxfe_forcespeed;
-	int			mxfe_forceduplex;
 	/*
 	 * Buffer management.
 	 */
@@ -127,6 +119,16 @@ struct mxfe {
 	 * Transceiver stuff.
 	 */
 	int			mxfe_phyaddr;
+	int			mxfe_adv_aneg;
+	int			mxfe_adv_100T4;
+	int			mxfe_adv_100fdx;
+	int			mxfe_adv_100hdx;
+	int			mxfe_adv_10fdx;
+	int			mxfe_adv_10hdx;
+	int			mxfe_forcephy;
+	int			mxfe_bmsr;
+	int			mxfe_anlpar;
+	int			mxfe_aner;
 	/*
 	 * Address management.
 	 */

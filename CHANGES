@@ -1,4 +1,13 @@
-#ident	@(#)CHANGES 1.10	04/06/30 GED
+$Id: CHANGES,v 1.2 2004/08/28 06:09:41 gdamore Exp $
+
+Changes in 1.0.3
+----------------
+	* disabled broken fiber autodetection in afe (use fiber=1 in afe.conf)
+	* converted source code to use CVS/RCS ident information
+	* updated website references to point at sourceforge
+	* etherdiag now has -n <parameters> to support ndd-like functionality
+	* mxfe link detection logic rewritten
+	* mxfe gets ndd support like afe has
 
 Changes in 1.0.2
 ----------------
