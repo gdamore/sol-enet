@@ -1,5 +1,5 @@
 #
-# ident	@(#)Makefile 1.15	03/05/19 GED
+# $Id: Makefile,v 1.2 2004/08/27 22:58:49 gdamore Exp $
 #
 # cmd/etherdiag/Makefile
 #
@@ -11,6 +11,7 @@ PROGNAME	=	etherdiag
 SRCS		=	etherdiag.c
 HDRS		=	$(TOP)/inc/sys/afe.h
 LDLIBS		=	-ldevinfo -lkstat
+CPPFLAGS	+=	-D_REENTRANT
 #
 # libdevinfo is not lint friendly
 #

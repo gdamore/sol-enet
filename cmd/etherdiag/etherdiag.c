@@ -1,7 +1,7 @@
 /*
  * Diagnostic utility for ethernet cards using Garrett's drivers.
  *
- * Copyright (c) 2001-2002 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,26 +12,24 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Garrett D'Amore.
- * 4. Neither the name of the author nor the names of any co-contributors
+ * 3. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY GARRETT D'AMORE AND CONTRIBUTORS ``AS IS''
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL GARRETT D'AMORE BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)etherdiag.c	1.44	03/06/03 GED"
+#ident	"@(#)$Id: etherdiag.c,v 1.2 2004/08/27 22:58:49 gdamore Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -345,6 +343,8 @@ usage(void)
 	(void) fprintf(stderr,
 	    "usage: etherdiag [-d <interface>] [-v] [-v]\n");
 	(void) fprintf(stderr,
+	    "       etherdiag -d <interface> -n <parameters>\n");
+	(void) fprintf(stderr,
 	    "       etherdiag -d <interface> -E\n");
 #ifdef	DEBUG
 	(void) fprintf(stderr,
@@ -371,6 +371,122 @@ do_getcsr(int fd, unsigned offset)
 			(void) printf("CSR %d @ 0x%02x: 0x%x\n", 
 			   offset >> 3, offset, val);
 		}
+	}
+}
+
+/*
+ * Like getsubopt(), but doesn't require option array.  The resulting
+ * name and value are returned.  Returns true if parse was success,
+ * false when no more suboptions exist.  The string suboptions is
+ * altered (null bytes placed at appropriate locations.) 
+ */
+static int
+parsesubopt(char *suboptions, char **namep, char **valuep, char **eptr)
+{
+	*namep = strtok_r(suboptions, ",", eptr);
+	if (*namep != NULL) {
+		char	*dummy;
+		strtok_r(*namep, "=", &dummy);
+		*valuep = strtok_r(NULL, "=", &dummy);
+		return (1);
+	}
+	return (0);
+}
+
+static void
+ndd_set(int fd, char *name, char *val)
+{
+	char			buf[8192];
+	struct strioctl		str;
+	char			*end;
+
+	str.ic_cmd = NDIOC_SET;
+	str.ic_timout = -1;
+	str.ic_dp = buf;
+	str.ic_len = sizeof (buf);
+
+	end = buf;
+	sprintf(end, "%s", name);
+	end += strlen(end) + 1;
+
+	sprintf(end, "%s", val);
+	end += strlen(end) + 1;
+
+	*end = 0;
+	end++;
+
+	str.ic_len = (intptr_t)end - (intptr_t)buf;
+
+	if (ioctl(fd, I_STR, &str) < 0) {
+		perror("ioctl");
+	}
+}
+
+static void
+ndd_get(int fd, char *name, intptr_t verbose)
+{
+	char			buf[8192];
+	struct strioctl		str;
+	char			*out;
+	char			*end;
+
+	str.ic_cmd = NDIOC_GET;
+	str.ic_timout = -1;
+	str.ic_dp = buf;
+	str.ic_len = sizeof (buf);
+
+	sprintf(buf, "%s", name);
+	buf[strlen(buf) + 1]  = 0;
+	if (ioctl(fd, I_STR, &str) < 0) {
+		perror("ioctl");
+		return;
+	}
+
+	end = buf + str.ic_len;
+	out = buf;
+	while (out < end) {
+		char *line = out;
+		out += strlen(out) + 1;
+		if (line != buf) {
+			printf("\n");
+		}
+		if (strlen(line) == 0) {
+			continue;
+		}
+		if (strcmp(name, "?") != 0) {
+			printf("%s%s", verbose ? "    " : "", line);
+		} else {
+			char 	*p, *m, *e;
+			p = strtok_r(line, " \t", &e);
+			m = strtok_r(NULL, "\n", &e);
+			printf("%s%-30s%s", verbose ? "    " : "", p, m);
+		}
+	}
+}
+
+static void
+do_ndd(int fd, char *options, intptr_t verbose)
+{
+	char	*n, *v, *e;
+
+	while (parsesubopt(options, &n, &v, &e)) {
+
+		if (v) {
+			ndd_set(fd, n, v);
+			if (!verbose) {
+				goto next;
+			}
+		} 
+		if (options == NULL) {
+			printf("\n");
+		}
+		if (verbose) {
+			printf("%s:\n", n);
+		}
+		ndd_get(fd, n, verbose);
+
+	next:
+		options = NULL;
 	}
 }
 
@@ -639,6 +755,7 @@ main(int argc, char **argv)
 	int		optw = 0;
 	int		optp = 0;
 	int		optm = 0;
+	char		*optn = NULL;
 	int		optz = 0;
 	intptr_t	optv = 0;
 	int		optE = 0;
@@ -655,11 +772,11 @@ main(int argc, char **argv)
 #endif
 
 	/* we parse argv twice, first we look for the PPA */
-	while ((opt = getopt(argc, argv, "d:vE" DEBUGOPTIONS)) != -1) {
+	while ((opt = getopt(argc, argv, "d:vEn:" DEBUGOPTIONS)) != -1) {
 		switch (opt) {
 		case 'E':
-			if (optc || opto || optp || optz || optw | optp ||
-			    optm) {
+			if (optn || optc || opto || optp || optz || optw ||
+			    optp || optm) {
 				usage();
 			}
 			optE++;
@@ -669,6 +786,12 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			optv++;
+			break;
+		case 'n':
+			if (optE) {
+				usage();
+			}
+			optn = optarg;
 			break;
 		case 'c':
 			if (optc || optm || opto || optp || optE || optz) {
@@ -730,7 +853,9 @@ main(int argc, char **argv)
 		exit(-1);
 	}
 
-	if (optc | opto) {
+	if (optn) {
+		do_ndd(fd, optn, optv);
+	} else if (optc || opto) {
 		if (optw) {
 			do_putcsr(fd, csr, val);
 		} else {
