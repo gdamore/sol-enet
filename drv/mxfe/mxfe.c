@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.2 2004/08/28 06:09:46 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.3 2004/08/30 18:16:46 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -307,7 +307,7 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision";
+	char	*rev = "$Revision: 1.3 $";
 	char	*ident = mxfe_ident;
 
         /* this technique works for both RCS and SCCS */
