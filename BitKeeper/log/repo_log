@@ -1,0 +1,5 @@
+!garrett 1093471906 bk-3.0: doc.:/home/garrett/enet/e/etherdrivers check -acf - = 0
+!garrett 1093471979 bk-3.0: doc.:/home/garrett/enet/e/etherdrivers check -ac - = 0
+!garrett 1093471979 bk-3.0: doc.:/home/garrett/enet/e/etherdrivers pull file://home/garrett/bk/etherdrivers = 0 xfered=998569
+!garrett 1093472163 bk-3.0: doc.:/home/garrett/enet/e/etherdrivers check -ac - = 0
+!garrett 1093472163 bk-3.0: doc.:/home/garrett/enet/e/etherdrivers pull file://home/garrett/bk/etherdrivers = 0 xfered=123992

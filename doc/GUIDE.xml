@@ -1,0 +1,822 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--	ident	"@(#)GUIDE.xml	1.14	04/06/30 GED" -->
+<html>
+<head>
+<title>AFE and MXFE Ethernet Drivers</title>
+<author>Garrett D'Amore</author>
+<docnumber>Version <version/></docnumber>
+<copyright>Copyright 2002-2004</copyright>
+</head>
+<body>
+<chaphead>About This Book</chaphead>
+<p>
+This book describes installing, configuring, and troubleshooting the
+<tt>afe</tt> and <tt>mxfe</tt> ethernet drivers for Solaris<sup>TM</sup>
+platforms.
+</p>
+<p>
+These ethernet drivers support a number of low-cost PCI-based
+fast ethernet controllers, which are used in quite a variety of
+network cards and on-board network interfaces. 
+Specifically, these drivers support devices based on the ADMtek Centaur
+and Comet controllers, the Macronix 98715 family, and the Lite-On PNIC-II
+controllers.
+</p>
+<section>Intended Audience</section>
+<p>
+This book is intended for system administrators administering ethernet
+devices.  You should be familiar with basic Solaris system administration.
+If you do not have these skills, you may wish to ask a more experienced
+system administrator for assistance.  There are also numerous classes
+offered throughout the world that can help with this.
+</p>
+
+<p>
+In order to perform the tasks outlined in this document, you must have
+<tt>root</tt> privileges for your system.
+</p>
+
+<section>Typographic Conventions</section>
+<p>
+The following table lists the typographic conventions used in this manual.
+</p>
+<p>
+<table bogus cellpadding="5" width="100%" border="1">
+<tr>
+<th>Typeface</th>
+<th>Meaning</th>
+<th>Example</th>
+</tr>
+<tr>
+<td><tt>AaBbCc123</tt></td>
+<td>On-screen output, commands, files and directories.</td>
+<td>Use <tt>showrev -p</tt> to list the patches on your system.</td>
+</tr>
+<tr>
+<td><entry>AaBbCc123</entry></td>
+<td>User input as typed exactly in on-screen output and examples.</td>
+<td><tt>csh% </tt><entry>pkginfo</entry></td>
+</tr>
+<tr>
+<td><var>AaBbCc12</var></td>
+<td>Variable text, used in examples for text that should be replaced with a real value.</td>
+<td><tt>csh% </tt><entry>cd</entry> <var>directory</var></td>
+</tr>
+</table>
+</p>
+<p>
+</p>
+<section>Feedback</section>
+<p>
+I welcome feedback regarding this document, and the software which
+it documents, in the hope that the end product will be improved.
+Please send your comments to me at 
+&lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+</p>
+
+<section>Copyright</section>
+<p>
+Copyright &copy; 2002, 2003 Garrett D'Amore,
+&lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+</p>
+<p>
+All rights reserved.  Redistribution and use in source, binary, and
+printed forms, with or without modification, are permitted  provided
+that the following conditions are met:
+</p>
+<ol>
+<li>Redistributions in any form must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Neither the name of the author nor the names of any co-contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.</li>
+</ol>
+<section>Disclaimer</section>
+<p>
+THIS DOCUMENT IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
+</p>
+<section>Trademarks</section>
+<p>
+Sun, Sun Microsystems, and Solaris<sup>TM</sup> are
+trademarks, registered trademarks, or service marks of Sun Microsystems, Inc. 
+SPARC<sup>&reg;</sup> and UltraSPARC<sup>&reg;</sup> are
+registered trademarks of SPARC International, Inc.  Intel<sup>&reg;</sup> is a
+registered trademark of Intel Corporation.  Other marks are the property
+of their respective owners.
+</p>
+
+<chaphead>Chapter 1 - Before You Begin</chaphead>
+
+<section>System Requirements</section>
+<p>
+This software requires Solaris 7 or newer on Intel processors, or Solaris 8 or
+newer running on SPARC processors. In order to use IPv6, you will need to use
+Solaris 8 or newer.
+</p>
+
+<note>
+Solaris 8 users on SPARC will require patch 109202-01
+or newer.  This patch is available from
+<a href="http://sunsolve.sun.com/">http://sunsolve.sun.com/</a>.  This patch
+is included with Solaris 8 10/00 and newer.
+</note>
+
+<p>
+You must also have a device which is supported by these drivers,
+which can be either a PCI card, CardBus card, or an on-board device.  The most
+up-to-date list of supported devices can be found on-line at <a
+href="http://garrett.damore.org/software/ethernet/support.shtml">http://garrett.damore.org/software/ethernet/support.shtml</a>
+</p>
+
+<p>
+If the device is not built in to your system, you will need an
+available compatible slot for the card.  Typically this means a
+bus-mastering capable PCI slot, with
+support for 32-bit, 33 MHz devices.  On modern systems, almost any
+PCI slot will meet this requirement.  (At the time of this writing, the
+author is unaware of any SPARC system with PCI slots that do not meet
+this requirement.)
+</p>
+
+<p>
+CardBus slots are available on systems from some vendors, and support
+CardBus devices which are compatible with these drivers.
+Note also that the slot must support the full 32-bit CardBus
+standard -- many systems have only support for 16-bit PC cards, and hence
+cannot support CardBus devices.  Check with your system vendor for more
+information.
+</p>
+
+<warning>
+These drivers do not support removal of CardBus devices
+while they are in use; removing a CardBus device while it is in use will
+probably crash your system.
+</warning>
+
+<p>
+See the manuals that came with your system for
+information about the slots in your particular system.
+</p>
+
+<p>
+You will also need an ethernet network to which to connect.  This can
+be in the form of a hub, switch, bridge, or direct connection to
+another computer using an ethernet cross-over cable.  If you need
+help, you should contact your network administrator.
+</p>
+
+<p>
+Additionally, you will need to know the configuration parameters
+for your network (IP address, hostname, netmask, default router, 
+and DNS servers if appropriate).  You should contact your network administrator
+to obtain these parameters for your system if you do not already know them.
+</p>
+
+<p>
+You will need to use <tt>root</tt> privileges in order to complete the
+tasks in this manual, so you must be in possession of the root password,
+or have equivalent access.
+<p>
+
+</p>
+Finally, you will also need a small amount of disk space on your root
+disk in order to complete the installation.  The recommended minimum free
+space is 5 megabytes.
+</p>
+
+<chaphead>Chapter 2 - Installation</chaphead>
+
+<p>This chapter describes installing the software for the ethernet device
+drivers.</p>
+
+<section>Downloading the Software</section>
+
+<p>
+In order to install the software, you must first obtain it.  Fortunately,
+the device drivers you will need are freely available on the Internet at the URL
+<a href="http://garrett.damore.org/software/ethernet/">http://garrett.damore.org/software/ethernet/</a>.
+</p>
+<p>
+There are several different files you can download.  Typically you will
+want to pick up one of either the
+<tt>etherdrivers-</tt><var>version</var>-<tt>sparc.zip</tt> or
+<tt>etherdrivers-</tt><var>version</var>-<tt>i386.zip</tt> files.
+ You can also grab
+the source code, which is located in a file named
+<tt>etherdrivers-</tt><var>version</var><tt>-src.zip</tt>.  In all these cases,
+<var>version</var>
+refers to the latest version, which at the time of this writing was
+<version/>.
+</p>
+
+<note>There may be older releases of the software available on the web site 
+as well.  Since these probably have bugs that have been fixed in later 
+releases, you are encouraged to stick with the latest release.</note>
+
+<section>Uncompressing the Package</section>
+<p>
+Now that you have got the software, you should <tt>unzip</tt>(1) it in
+an appropriate scratch directory.  The following example shows this being
+done for version <version/> on SPARC.
+</p>
+<screen>
+csh% <entry>cp etherdrivers-<version/>-sparc.zip /var/tmp</entry>
+csh% <entry>cd /var/tmp</entry>
+csh% <entry>unzip etherdrivers-<version/>-sparc.zip</entry>
+csh% <entry>cd etherdrivers-<version/></entry>
+</screen>
+
+<section>Installing the Packages</section>
+
+<p>
+Before you can install the software, you must become the superuser
+(for example by using the <tt>su</tt>(1M) command.)
+</p>
+
+<screen>
+csh% <entry>su</entry>
+Password: 
+#
+</screen>
+
+<p>
+The next step is to install the software packages.  This is done
+by executing the <tt>pkgadd</tt>(1M) command, as shown below:
+</p>
+
+<screen>
+# <entry>pkgadd -d Packages/</entry><var>arch</var><entry> all</entry>
+</screen>
+
+<p>
+The <var>arch</var> is assumed to refer to <tt>sparc</tt> or <tt>i386</tt>.
+You can determine the correct value by executing the following command: 
+</p>
+
+<screen>
+csh% <entry>uname -p</entry>
+</screen>
+
+<note>You may be asked to answer additional questions,
+if <tt>pkgadd</tt> determines that it needs more information.  See
+the <tt>pkgadd</tt>(1M) or <tt>admin</tt>(4) manual pages for
+information about this.</note>
+
+<section>Checking your Installation</section>
+
+<p>
+After software is installed, you should check the installation to make
+sure that the system has recognized the device driver, as well as any
+associated devices.
+</p>
+
+<p>
+The simplest way to do this is to run the diagnostic utility to identify
+the devices that are present in the system.  Do this by executing the
+<tt>etherdiag</tt>(1M) utility, as shown in the following example:
+</p>
+<screen>
+root# <b>/opt/GEDnet/bin/etherdiag</b>
+Interface: afe0
+Model: Accton EN5251
+Speed: 100 Mbps
+Duplex: full
+Media: twpair
+Ethernet Address: 0:0:e8:0:0:8f
+</screen>
+
+<p>
+At this point the software is installed properly, but the device has
+not been configured for use with any network protocols.  The next chapter
+will explain how to configure the device so that you can use it.
+</p>
+
+<section>Updating Your Shell Settings</section>
+
+<p>
+The diagnostic software and manual pages are installed under
+<tt>/opt/GEDnet/bin</tt> and <tt>/opt/GEDnet/man</tt>.  You may wish
+to modify your shell settings appropriately.  The following example
+displays this for <tt>csh</tt>(1) users.
+</p>
+
+<screen>
+csh% <b>setenv PATH ${PATH}:/opt/GEDnet/bin</b>
+csh% <b>setenv MANPATH ${MANPATH}:/opt/GEDnet/man</b>
+</screen>
+
+<p>
+This will make the commands and manual pages available in your environment
+without needing to specify the full path.  For example, the manual page
+for the driver can be read using the following command:
+</p>
+
+<screen>
+csh% <b>man afe</b>
+</screen>
+
+<p>
+See the manual page for <tt>man</tt>(1) for more information.
+</p>
+
+<section>Removing the Software</section>
+
+<p>If you want to remove the software, you must first ensure that the
+device is not currently in use.  Typically, you must do this by
+removing any interface configuration files you created for the interface
+(such as <tt>/etc/hostname.</tt><var>interface</var>).  You may need to
+also edit configuration files, for example to modify default routes,
+etc.
+</p>
+
+<p>For a full discussion of network configuration, or (in this case)
+unconfiguration, please refer to the
+<cite>Solaris 8 System Administration Guide, Volume 3</cite>.
+</p>
+
+<p>
+Once you have deconfigured the interface, you can safely remove the
+software.  This is easily done by executing the following command:
+</p>
+
+<screen>
+# <entry>pkgrm GEDenetu GEDenetd GEDenetm</entry>
+</screen>
+
+<p>
+You will need to answer 'y' to certain prompts in order to proceed.
+After this is complete, the software will have been removed from your
+system.  You may need to reboot to remove the drivers from memory,
+however.
+</p>
+
+<chaphead><a name="Chap3">Chapter 3 - Configuring Your Ethernet Device</a></chaphead>
+
+<p>This chapter describes the steps to configure your device for use
+in a network.</p>
+
+<section>Configuring for IPv4 with Fixed Address</section>
+
+<p>
+To configure for a fixed IPv4 address, you must place the IP
+address of your network in <tt>/etc/hostname.</tt><var>interface</var>,
+where <var>interface</var> is the name of the interface to use, such
+as <tt>afe0</tt>.  The following example shows this, for a system
+that wishes to use the IP address 192.168.128.101.  (Replace with your
+real IP address.)
+</p>
+
+<screen>
+# <entry>echo 192.168.128.101 &gt; /etc/hostname.afe0</entry>
+</screen>
+
+<p>
+The interface will now automatically be configured the next time the system
+boots.  To configure the interface for immediate use, without rebooting,
+the the <tt>ifconfig</tt>(1M) command can be used.  Note that you must
+first "plumb" the interface using a command of the following form:
+</p>
+
+<screen>
+# <entry>ifconfig </entry><var>interface</var><entry> plumb</entry>
+</screen>
+
+<p>
+Until the interface is plumbed in this fashion, it will not display in
+the list of available interfaces (with the <tt>ifconfig -a</tt> command.)
+</p>
+
+<p>
+Note that this is only the first part of network configuration.  You may
+have to edit several other files, such as <tt>/etc/hosts</tt>,
+<tt>/etc/resolv.conf</tt>, <tt>/etc/netmasks</tt>,
+and <tt>/etc/defaultrouter</tt> to properly configure your
+network.
+</p>
+
+<p>
+The generalities of network configuration on Solaris are well documented
+in the <cite>Solaris 8 System Administration Guide, Volume 3</cite>, which
+can be accessed on-line at
+<a href="http://docs.sun.com/">http://docs.sun.com/</a>.
+</p>
+
+<section>Configuring for IPv4 with DHCP</section>
+
+<p>
+To set up your ethernet device to act as a client
+for DHCP (Dynamic Host Configuration Protocol) you must create
+a file <tt>/etc/dhcp.</tt><var>interface</var>.  This file should
+contain the word <tt>primary</tt> if the interface is your primary
+(or only) network interface.  This will cause DHCP to be used to
+set the hostname, default route, and other global parameters for
+the system, in addition to the interface-specific configuration.
+</p>
+<p>
+If the file is empty, then DHCP is only used to configure the interface
+and global parameters such as the hostname will not be adjusted.
+</p>
+<p>
+The following example shows how to enable the interface <tt>mxfe0</tt>
+as the primary (and only) interface, using DHCP.
+</p>
+
+<screen>
+# <entry>echo primary &gt; /etc/dhcp.mxfe0</entry>
+</screen>
+
+<p>
+Note that the configuration does not take effect until the next
+time the system is rebooted.  The <tt>auto-dhcp</tt> sub-command
+of <tt>ifconfig</tt> can be used to configure the interface from DHCP
+without rebooting.  (The interface must first be "plumbed" though.)
+The following example demonstrates use of <tt>ifconfig</tt>
+to configure <tt>afe1</tt> via DHCP for temporary use without rebooting.
+</p>
+
+<screen>
+# <entry>ifconfig afe1 plumb auto-dhcp</entry>
+</screen>
+
+<p>
+See the <tt>ifconfig</tt>(1M) manual page for more information.
+</p>
+
+<section>Configuring for IPv6 with Autoconfiguration</section>
+
+<p>
+In IPv6, address autoconfiguration is commonly used to configure the
+address(es) that are used on a network interface.  In most cases, static
+addresses will not be used with IPv6.  To configure the device to use
+address autoconfiguration (for example, via the neighbor discovery protocol),
+all one needs to do is create an empty
+<tt>/etc/hostname6.</tt><var>interface</var> file.  For example, the
+following command enables IPv6 to be used with address autoconfiguration
+on the <tt>mxfe0</tt> interface.
+</p>
+
+<screen>
+# <entry>touch /etc/hostname6.mxfe0</entry>
+</screen>
+
+<p>
+Similar to the IPv4 case, this does not take effect until the machine
+is rebooted.
+To configure an interface for IPv6 autoconfiguration temporarily, without
+rebooting, use a command similar to the following:
+</p>
+
+<screen>
+# <entry>ifconfig mxfe0 inet6 plumb up</entry>
+</screen>
+
+<section>Configuring for IPv6 with Static Addressing</section>
+
+<p>
+Static addressing is much less likely to be used with IPv6, but
+it can still be done.  With static IP addressing, one just needs to
+put the hostname or IPv6 address in the <tt>/etc/hostname6.</tt><var>interface</var> file.
+</p>
+
+<p>
+Again, a reboot is required for this to take effect.  There is also
+an <tt>ifconfig</tt> command that can be used for this as well.  It
+typically takes the form:
+</p>
+
+<screen>
+# <entry>ifconfig afe0 inet6 plumb addif 1234::5678/64 up</entry>
+</screen>
+
+<p>
+In the above address the address 1234::5678/64 was added to the <tt>afe0</tt>
+interface.  Please refer to the <cite>Solaris 8 System Administration Guide, Volume 3</cite> for more information about IPv6 addressing.
+</p>
+
+<section>Configuring for Use with Other Protocols</section>
+
+<p>
+There are protocols besides IPv4 and IPv6 that can be used with ethernet.
+Some examples of these are Apple's AppleTalk and Novell's IPX/SPX protocols.
+These protocols should work fine with your new ethernet device.  The details
+of configuring such protocols to use the ethernet device should be documented
+in your network protocol software documentation.  You should be able to just
+replace the name of your interface (for example <tt>afe0</tt>) for the
+name of any other "standard" interface (for example <tt>hme0</tt>) to which the
+documentation might refer.
+</p>
+<p>
+Note however while all this <em>should</em> work, it has not be tested for
+use with these drivers, so your results may vary.  But it is hoped and believed
+that these drivers will function properly with any other Solaris networking
+software.  The author would like very much to learn about any cases to the
+contrary.
+</p>
+
+<chaphead>Chapter 4 - Diagnostics and Troubleshooting</chaphead>
+
+<p>This chapter describes diagnostic and troubleshooting procedures
+for use with the ethernet device.  Note that to use most of the commands in
+this chapter, you must run them as <tt>root</tt>.</p>
+
+<section>Using the <tt>etherdiag</tt>(1M) Command</section>
+
+<p>The <tt>etherdiag</tt>(1M) utility can be used to determine which
+devices are in your system along with other information about those
+devices, such as the ethernet address, manufacturer, link speed, and assorted
+other information.  Normally it should be run without any options,
+to get a full listing for your system.  Here is an example on one system:
+</p>
+
+<screen>
+root# <entry>/opt/GEDnet/bin/etherdiag</entry>
+Interface: afe0
+Model: Accton EN5251
+Speed: 100 Mbps
+Duplex: full
+Media: twpair
+Ethernet Address: 0:0:e8:0:0:8f
+</screen>
+
+<p>
+If you would like to obtain more information, merely add the verbose
+flag (<tt>-v</tt>) which, will cause the utility to display more
+information.  If used twice, this flag causes even more output to
+be displayed.  When submitting bug or problem reports, it is best to
+include the full (<tt>-v -v</tt>) output from this command.
+</p>
+
+<p>
+See the <tt>etherdiag</tt>(1M) manual page for more options that can
+be used.
+</p>
+
+<section>Using the <tt>snoop</tt>(1M) Command</section>
+
+<p>
+Perhaps one of the most useful diagnostic utilities for network
+troubleshooting is the <tt>snoop</tt>(1M) utility which is bundled with
+Solaris.  This utility can be used to watch packets traveling across
+the ethernet.
+</p>
+
+<note>The <tt>snoop</tt> utility will cause your interface to run
+at reduced performance, so it isn't a good idea to leave it running
+for long periods of time, or whenever performance is critical.</note>
+
+<p>
+To run <tt>snoop</tt> on a specific interface, use the <tt>-t</tt>
+<var>device</var> option.  The example below shows <tt>snoop</tt> running on <tt>afe0</tt>:
+</p>
+
+<screen>
+# <entry>snoop -d afe0</entry>
+Using device /dev/afe (promiscuous mode)
+
+    doc-afe0 -> 192.168.128.209 UDP D=64292 S=34614 LEN=104
+    doc-afe0 -> 192.168.128.209 UDP D=64292 S=34614 LEN=64
+192.168.128.209 -> doc-afe0     UDP D=34614 S=64292 LEN=80
+    doc-afe0 -> 192.168.128.209 UDP D=64292 S=34614 LEN=876
+    doc-afe0 -> 192.168.128.209 UDP D=64292 S=34614 LEN=64
+
+</screen>
+
+<p>
+There are numerous other options for <tt>snoop</tt>, which allow
+disabling promiscuous mode, capturing packets to a file, and enabling
+more verbose display.  Please read the manual page for more information
+about this useful utility.
+</p>
+
+<section>Using the <tt>netstat</tt>(1M) Command</section>
+
+<p>
+The <tt>netstat</tt> command is useful for monitoring various
+information regarding the IP stack on your machine.  This utility
+is complex, and is not covered fully here, but the <tt>-i</tt> option
+can be useful to give an overview of the interfaces on your system.
+</p>
+
+<p>
+The following example is taken from a system with two network interfaces,
+one of which is the stock <tt>eri0</tt> supplied with the system, and one
+of which is the <tt>afe0</tt> device which was added in afterwards.  The
+<tt>lo0</tt> interface is not a real network interface, but is an internal
+software loopback.
+</p>
+
+<screen>
+# <entry>netstat -i</entry>
+Name  Mtu  Net/Dest      Address        Ipkts  Ierrs Opkts  Oerrs Collis Queue
+lo0   8232 loopback      localhost      4991935 0     4991935 0     0      0
+eri0  1500 doc           doc            2835250 1     3652228 298   0      0
+afe0  1500 doc-afe0      doc-afe0       1491228 0     5605143 45    0      0
+</screen>
+
+<section>Getting Statistics with <tt>kstat</tt>(1M)</section>
+
+<p>
+These device drivers maintain a number of statistics, which can be
+useful in determining a number of things about the device.  The
+simplest way to view these statistics (on Solaris 8 and later) is
+with the <tt>kstat</tt>(1M) command.  Here is an example for <tt>mxfe1</tt>.
+Note the colon (:) separating <tt>mxfe</tt> (the driver) from <tt>1</tt> (the
+PPA, or device instance.)
+</p>
+
+<screen>
+# kstat mxfe:1 
+module: mxfe                            instance: 1     
+name:   mxfe1                           class:    net                           
+        align_errors                    0
+        blocked                         0
+        brdcstrcv                       87
+        brdcstxmt                       1911
+        carrier_errors                  45
+        collisions                      0
+        crtime                          1815247.75130736
+        defer_xmts                      0
+        duplex                          full
+        ex_collisions                   0
+        fcs_errors                      0
+        first_collisions                0
+        ierrors                         0
+        ifspeed                         100000000
+        intr                            1869597
+        ipackets                        1488584
+        ipackets64                      1488584
+        macrcv_errors                   0
+        macxmt_errors                   45
+        media                           twpair
+        missed                          0
+        multi_collisions                0
+        multircv                        0
+        multixmt                        30405
+        norcvbuf                        0
+        noxmtbuf                        0
+        obytes                          750185937
+        obytes64                        5045153233
+        oerrors                         45
+        oflo                            0
+        opackets                        5602789
+        opackets64                      5602789
+        promisc                         off
+        rbytes                          162676612
+        rbytes64                        162676612
+        rcv_badinterp                   0
+        runt_errors                     0
+        snaptime                        2423664.10711802
+        sqe_errors                      45
+        toolong_errors                  0
+        tx_late_collisions              0
+        uflo                            0
+        unknowns                        24
+        xmt_badinterp                   0
+        xmtretry                        921895
+
+</screen>
+
+<p>A full discussion of the meaning of the statistics is not given
+here.  You should contact the author if you have specific questions
+about any of these values.</p>
+
+<section>Verifying Connectivity with the <tt>ping</tt>(1M) Command</section>
+
+<p>The <tt>ping</tt>(1M) command can be used to verify connectivity
+between two systems.  Typically this command is run with a single
+option, which is the hostname or IP address to which you want to verify
+connectivity.</p>
+
+<p>This causes an ICMP (Internet Control Message Protocol) ECHO packet
+to be sent to the specified host or IP address, which will normally
+send a response packet back to the originating machine.
+</p>
+
+<note>Many sites restrict ICMP packets using firewalls.  In such a
+case <tt>ping</tt> will not function correctly, even if normal
+traffic would otherwise get through.  Ask your network administrator
+for help if you believe this is the case at your site.
+</note>
+
+<p>The following demonstrates a test of connectivity to the
+<tt>www.whitehouse.gov</tt> site:</p>
+
+<screen>
+% <entry>ping www.whitehouse.gov</entry>
+www.whitehouse.gov is alive
+</screen>
+
+<p>
+Note that unlike most of the other diagnostics presented in this
+chapter, <tt>ping</tt> can be run without root privileges.
+</p>
+
+<chaphead>Appendix A - Software License</chaphead>
+<a name="AppendixA"></a>
+
+<p>
+The software documented by this manual is covered under the following
+terms:
+</p>
+
+<p>
+Copyright &copy; 2001-2003 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+All rights reserved.
+</p>
+<p>
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+</p>
+<ol>
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+</li>
+<li>
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+</li>
+<li>Neither the name of the author nor the names of any co-contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
+</li>
+</ol>
+
+<p>
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS IS''
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+</p>
+
+<chaphead>Appendix B - Frequently Asked Questions</chaphead>
+
+<ol>
+<li><b>I installed the software, but I can't see my device.</b><br/>
+This usually stems from failing to follow the documented procedures correctly.
+The most common error is to attempt to configure or see the device with
+<tt>ifconfig</tt>, without first "plumbing" it, as described in
+<a href="#Chap3">Chapter 3</a>.  Also, make sure your device is on
+the supported devices list.
+<p/>
+</li>
+
+<li><b>Why won't my interface negotiate for full duplex?</b><br/>
+A common misunderstanding is that all devices can operate in full-duplex
+mode.  While most NICs, and most <strong>switches</strong> are capable
+of full-duplex operation, <strong>hubs</strong> are generally not able
+to operate in full-duplex mode.  If you are connecting to a hub, half-duplex
+operation is normal.
+<p/>
+Also, make sure that if you are connecting to a switch, that you have
+enabled autoconfiguration (sometimes called auto-sense) on the port.
+<p/>
+</li>
+
+<li><b>Can I use this for diskless client or install Solaris (jumpstart) over it?</b><br/>
+No.  On SPARC, network boot requires an FCode PROM, which is absent from most
+or all NICs produced for the commodity PC market.  On x86 platforms, a real
+mode driver is required, and one has not been written yet.  If you'd like
+to volunteer to write a real mode driver, please contact the author.
+<p/>
+</li>
+
+<li><b>Will this work with Solaris 7 or older on SPARC?</b><br/>
+No, SPARC platforms require Solaris 8.  Changing this would be
+non-trivial, since there is no GLD for Solaris 7 or older on SPARC.
+<p/>
+</li>
+
+<li><b>Will this work with Solaris 2.6 or older on Intel?</b><br/>
+No.  Changing this would be non-trivial, since there were substantial
+changes to the GLD in Solaris 7.  (These changes give drivers based on
+the GLDv2, such as these, much better performance.)
+<p/>
+</li>
+
+<li><b>I really like this software.  How can I donate to the author?</b><br/>
+The author greatly appreciates any donations which might help fund continued
+development efforts.  A donation of $5 (five US dollars) per station using
+these drivers is recommended, but any donation is gratefully accepted, and
+none is obligatory.  The author has an account with 
+<a href="http://www.paypal.com/">PayPal</a>, so you can donate
+that way.  The easiest way to do this is to click the appropriate link
+on the home page for these drivers at
+<a href="http://garrett.damore.org/software/ethernet">http://garrett.damore.org/software/ethernet/</a>.
+<p/>
+</li>
+
+</ol>
+
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE REFENTRY PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+]>
+<!-- @(#)mxfe.7d.in 1.17 04/06/30 GED -->
+<refentry id="mxfe-7d">
+<refmeta>
+	<refentrytitle>mxfe</refentrytitle>
+	<manvolnum>7D</manvolnum>
+	<refmiscinfo class="date">30 June 2004</refmiscinfo>
+	<refmiscinfo class="sectdesc">Drivers</refmiscinfo>
+	<refmiscinfo class="software">%PKG% %VERSION%</refmiscinfo>
+	<refmiscinfo class="arch">generic</refmiscinfo>
+	<refmiscinfo class="copyright">Copyright (c) 2001-2004 by Garrett D'Amore.  All Rights Reserved</refmiscinfo>
+</refmeta>
+<refnamediv>
+	<refname>mxfe</refname>
+	<refpurpose>MXFE Fast Ethernet device driver</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<title>SYNOPSIS</title>
+	<synopsis><literal>/dev/mxfe</literal></synopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>DESCRIPTION</title>
+	<para><citerefentry><refentrytitle>mxfe</refentrytitle><manvolnum>7D</manvolnum></citerefentry>
+is a Solaris STREAMS hardware driver supporting the Data Link Provider
+Interface over the Macronix 98715 family (including the Lite-On
+PNIC-II) of fast ethernet controllers.  (See <olink
+targetdocent="REFMAN7"
+localinfo="dlpi-7p"><citerefentry><refentrytitle>dlpi</refentrytitle><manvolnum>7P</manvolnum></citerefentry></olink>.)
+</para> </refsect1>
+
+<refsect1>
+	<title>DLPI SPECIFICATIONS</title>
+	<para>The <literal>mxfe</literal> driver is based upon the
+GLDv2, and supports both style 1 and style 2 modes of operation.
+Physical points of attachment (PPAs) are interpreted as the instance
+number of the <literal>mxfe</literal> controller as assigned by the
+operating system.</para>
+	<para>Here are the relevant fields returned as part of a
+<literal>DL_INFO_ACK</literal> response:</para>
+	<itemizedlist mark="bullet">
+	<listitem><para>The maximum SDU is 1500.</para></listitem>
+	<listitem><para>The minimum SDU is 0.</para></listitem>
+	<listitem><para>The dlsap address length is 8.</para></listitem>
+	<listitem><para>The MAC type is <literal>DL_ETHER</literal>.</para>
+</listitem>
+	<listitem><para>The SAP length is -2; the 6 byte physical address is
+followed immediately by a 2 byte SAP.</para></listitem>
+	<listitem><para>The service mode is <literal>DL_CLDLS</literal>.</para>
+</listitem>
+	<listitem><para>The broadcast address is the 6-byte ethernet
+broadcast address (<literal>ff:ff:ff:ff:ff:ff</literal>).</para></listitem>
+</itemizedlist>
+
+<para>If the SAP provided is zero, then IEEE 802.3 mode is assumed and
+outbound frames will have the frame payload length written into the type field.
+Likewise, inbound frames with a SAP between zero and 1500 are interpreted
+as IEEE 802.3 frames, and delivered to any streams that have bound to
+SAP zero (the 802.3 SAP).</para>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+<variablelist termlength="medium">
+<varlistentry><term><literal>full-duplex</literal></term>
+<listitem><para>Specifies full-duplex operation (when set to one) or half-duplex
+operation (when set to zero).  If not specified, then IEEE 802.3u
+autonegotiation is used to determine the link duplex mode.
+</para></listitem></varlistentry>
+
+<varlistentry><term><literal>speed</literal></term>
+<listitem><para>Specifies the speed to be selected in Mbps (either 10 or 100).
+If not specified, then IEEE 802.3u autonegotiation is used to determine
+the link speed.
+</para></listitem></varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>SUPPORTED CARDS</title>
+<para>Please see the web site at
+<literal>http://garrett.damore.org/software/ethernet/</literal>
+for the most current list of supported and tested controllers and cards.
+</para>
+</refsect1>
+
+<refsect1><title>BUGS AND LIMITATIONS</title>
+	<itemizedlist mark="bullet">
+	<listitem><para>Performance is not optimized.</para></listitem>
+	<listitem><para>Power management is not supported.</para></listitem>
+	<listitem><para>Suspend/Resume functionality is not tested.</para>
+</listitem>
+	<listitem><para>PCI hot plug and Dynamic Reconfiguration is
+ not tested.</para></listitem>
+	</itemizedlist>
+</refsect1>
+
+<refsect1><title>FILES</title>
+<variablelist termlength="medium">
+	<varlistentry><term><filename>/dev/mxfe</filename></term>
+	<listitem><para><literal>mxfe</literal> special character device</para>
+</listitem></varlistentry>
+	<varlistentry><term><filename>/kernel/drv/mxfe.conf</filename></term>
+	<listitem><para><literal>mxfe</literal> device properties</para>
+</listitem></varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>GETTING IT</title>
+<para>
+The latest version of this driver is available via HTTP access
+at <literal>http://garrett.damore.org/software/ethernet/</literal>.
+</para>
+</refsect1>
+
+<refsect1><title>COPYRIGHT</title>
+<para>
+Copyright (c) 2001-2002 by Garrett D'Amore
+&lt;<literal>garrett@damore.org</literal>&gt;.
+All rights reserved.
+</para>
+<para>
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+</para>
+<orderedlist>
+<listitem><para>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+</para></listitem>
+<listitem><para>
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+</para></listitem>
+<listitem><para>
+Neither the name of the author nor the names of any co-contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
+</para></listitem>
+</orderedlist>
+
+<para>
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS IS''
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<olink targetdocent="REFMAN1M" localinfo="ifconfig-1m"><citerefentry><refentrytitle>ifconfig</refentrytitle><manvolnum>1M</manvolnum></citerefentry></olink>,
+<olink targetdocent="REFMAN1M" localinfo="netstat-1m"><citerefentry><refentrytitle>netstat</refentrytitle><manvolnum>1M</manvolnum></citerefentry></olink>,
+<olink targetdocent="REFMAN4" localinfo="driver.conf-4"><citerefentry><refentrytitle>driver.conf</refentrytitle><manvolnum>4</manvolnum></citerefentry></olink>,
+<olink targetdocent="REFMAN7P" localinfo="dlpi-7p"><citerefentry><refentrytitle>dlpi</refentrytitle><manvolnum>7P</manvolnum></citerefentry></olink>
+</para>
+</refsect1>
+
+</refentry>

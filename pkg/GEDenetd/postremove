@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# ident "@(#)postremove	1.10	02/04/25 GED"
+#
+DRVS="afe mxfe"
+REM_DRV=/usr/sbin/rem_drv
+if [ "${BASEDIR}" = "/" ]; then
+	REM_DRV_FLAGS=
+else
+	REM_DRV_FLAGS="-b ${BASEDIR}"
+fi
+
+for DRV in ${DRVS}
+do
+	${REM_DRV} ${REM_DRV_FLAGS} ${DRV}
+done
+exit 0

@@ -1,0 +1,18 @@
+#
+# ident "@(#)pkginfo_src 1.9	02/04/12 GED"
+#
+# pkginfo file for afe man pages
+#
+PKG=GEDenetm
+NAME=Garrett's Solaris Ethernet Drivers (Man Pages)
+ARCH=<arch>
+VERSION=<version>
+CATEGORY=system
+DESC=Driver documentation for ethernet drivers.
+VENDOR=Garrett D'Amore
+HOTLINE=This package is unsupported.
+EMAIL=garrett@damore.org
+CLASSES=none
+BASEDIR=/opt
+MAXINST=9999
+

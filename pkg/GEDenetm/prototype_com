@@ -1,0 +1,17 @@
+#
+# ident	"@(#)prototype_com	1.11	02/05/16 GED"
+#
+# prototype file for the afe driver
+#
+i pkginfo
+i copyright=$TOP/pkg/copyright
+#
+# Man pages
+#
+d none GEDnet 0755 root sys
+d none GEDnet/man 0755 bin bin
+d none GEDnet/man/sman1m 0755 bin bin
+d none GEDnet/man/sman7d 0755 bin bin
+f none GEDnet/man/sman1m/etherdiag.1m=$TOP/man/etherdiag.1m 0644 bin bin
+f none GEDnet/man/sman7d/afe.7d=$TOP/man/afe.7d 0644 bin bin
+f none GEDnet/man/sman7d/mxfe.7d=$TOP/man/mxfe.7d 0644 bin bin

@@ -1,0 +1,7 @@
+#
+# ident "@(#)prototype_i386	1.8	02/05/16 GED"
+#
+# prototype file for ethernet drivers
+#
+!include prototype_com
+f none GEDnet/bin/etherdiag=$TOP/obj.i386/etherdiag 0755 bin bin

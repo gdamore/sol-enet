@@ -1,0 +1,11 @@
+#
+# ident	"@(#)prototype_com	1.10	04/06/30 GED"
+#
+# prototype file for ethernet drivers
+#
+i pkginfo
+i postinstall
+i postremove
+i checkinstall
+i copyright=$TOP/pkg/copyright
+i depend

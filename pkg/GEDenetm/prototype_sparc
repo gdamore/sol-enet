@@ -1,0 +1,6 @@
+#
+# ident "@(#)prototype_sparc 1.6	02/04/12 GED"
+#
+# prototype file for the afe driver
+#
+!include prototype_com

@@ -1,0 +1,12 @@
+#
+# ident	@(#)Makefile.common 1.1	01/02/20 GED
+#
+# pkg/Makefile.common
+#
+
+include	$(TOP)/Makefile.common
+
+PKGARCHIVE	= $(TOP)/pkgdir.$(ARCH)
+PKGSRCS		= prototype_com prototype_i386 prototype_sparc
+COMMONSRCS	= ../copyright
+DISTSRCS	= $(PKGSRCS) Makefile pkginfo_src

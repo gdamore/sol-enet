@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# ident "@(#)postinstall	1.18	04/06/30 GED"
+#
+# Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the author nor the names of any co-contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS IS''
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+
+ADD_DRV=/usr/sbin/add_drv
+DRVS="afe mxfe"
+
+havecompat()
+{
+	while [ -n "$1" ]
+	do
+		prtconf -vp | grep "'$1'" > /dev/null
+		if [ $? -eq 0 ];
+		then
+			return 0
+		fi
+		shift;
+	done
+	return 1
+}
+
+compat2alias()
+{
+	alias=
+	while [ -n "$1" ]
+	do
+		alias="$alias \"$1\"";
+		shift;
+	done
+	echo $alias
+}
+
+afe_COMPAT="pci1317,985 pci1317,981 pci1317,1985 pci1317,9511 pci1317,9513 pci1113,1216 pci1737,ab08"
+afe_DRVPERM='* 0600 root sys'
+
+mxfe_COMPAT="pci11ad,c115 pci10d9,531 pci10d9,512 pci11fc,9881"
+mxfe_DRVPERM='* 0600 root sys'
+
+if [ "${BASEDIR}" = "/" ]
+then
+	BFLAG=
+	NFLAG=-n
+else
+	BFLAG="-b ${BASEDIR}"
+	NFLAG=
+fi
+
+for DRV in ${DRVS}
+do
+	grep "^${DRV} " $BASEDIR/etc/name_to_major 2>&1 >/dev/null
+	if [ $? -ne 0 ]; then
+		eval `echo drvcompat='"$'${DRV}_COMPAT'"'`
+		eval `echo drvperm='"$'${DRV}_DRVPERM'"'`
+		drvalias=`compat2alias $drvcompat`
+		if havecompat $drvcompat
+		then
+			drvflags="${BFLAG}"
+		else
+			drvflags="${BFLAG} ${NFLAG}"
+		fi
+		${ADD_DRV} ${drvflags} -m "${drvperm}" -i "${drvalias}" ${DRV}
+		if [ $? -ne 0 ]; then
+			echo "postinstall: add_drv $DRV failed\n" >&2
+			exit 1
+		fi
+	fi
+done
+exit 0

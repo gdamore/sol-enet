@@ -1,0 +1,18 @@
+#
+# ident "@(#)pkginfo_src 1.8	02/04/12 GED"
+#
+# pkginfo file for ethernet utilities
+#
+PKG=GEDenetu
+NAME=Garrett's Solaris Ethernet Drivers (Utility and Header)
+ARCH=<arch>
+VERSION=<version>
+CATEGORY=system
+DESC=Diagnostic utility and header file for ethernet driver.
+VENDOR=Garrett D'Amore
+HOTLINE=This package is unsupported.
+EMAIL=garrett@damore.org
+CLASSES=none
+BASEDIR=/opt
+MAXINST=9999
+

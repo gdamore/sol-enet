@@ -1,0 +1,45 @@
+
+@(#)README	1.8	03/03/26 GED
+
+Garrett's Fast Ethernet Drivers README
+======================================
+
+Please read the included User's Guide, which is supplied in PDF, HTML,
+and PostScript (see the files GUIDE.pdf, GUIDE.html, and GUIDE.ps).  This
+document includes detailed installation instructions, and following it may
+make the installation process much simpler.
+
+General Info
+------------
+
+These drivers support several different chips:
+
+	* ADMtek AN983 (Centaur-P)
+	* ADMtek AN985 (Centaur-C)
+	* ADMtek ADM9511 (Centaur-II, software modem)
+	* ADMtek ADM9513 (Centaur-II, hardware modem)
+	* ADMtek AL981 (Comet, untested)
+	* Accton EN5251 (Centaur-P)
+	* Lite-On PNIC-II
+	* Macronix 98715 family
+	* Macronix 98725
+
+For the multifunction chips (Centaur-II), only ethernet functionality
+is supported.  I've done various amounts of testing with the Centaur
+chips.  ADMtek has done some testing with the Centaur-II's and Accton
+has also done some testing with the EN5251.
+
+For more up-to-date information, please see
+
+	http://garrett.damore.org/software/ethernet/support.shtml
+
+These drivers support Solaris 8 and later on SPARC, and Solaris 7 and later
+on x86 platforms.
+
+Solaris 8 users on SPARC may need to apply patch 109202-01 or
+newer.  This patch can be found at http://sunsolve.sun.com/
+
+Note that these drivers do not support network booting as a client (you
+can still use this driver on boot servers).
+
+	-- Garrett D'Amore <garrett@damore.org>

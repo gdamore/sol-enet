@@ -1,0 +1,54 @@
+#
+# ident	@(#)Makefile.common	1.34	04/06/30 GED
+#
+# Makefile.common
+#
+
+VER		=	1.0.2
+REV		:sh=	date '+%Y.%m.%d.%H.%M'
+LINT		=	lint
+LINTFLAGS	=	-erroff=E_BAD_PTR_CAST_ALIGN
+LINTFLAGS	+=	$(CPPFLAGS)
+INSTALL		=	/usr/sbin/install
+LD		=	ld
+DDICT		=	env DDICTHOME=/opt/SUNWddk /opt/SUNWddk/bin/ddict
+DDICTFLAGS	=	$(CPPFLAGS)
+PKGMK		=	pkgmk -o
+PKGADD		=	pkgadd
+PKGRM		=	pkgrm
+MKDIR		=	mkdir -p
+sparc_ARCHS	=	sparc sparcv9
+i386_ARCHS	=	i386
+ARCH		=	$(HOST_ARCH:-%=%)
+ARCHS_LIST	=	$(HOST_ARCH:-%=%_ARCHS)
+ARCHS		=	${${ARCHS_LIST}}
+DISTFILES	=	$(TOP)/DISTFILES
+SGML2ROFF	=	/usr/lib/sgml/sgml2roff
+DPOST		=	/usr/lib/lp/postscript/dpost
+TROFF		=	troff
+NROFF		=	nroff
+HTMLDOC		=	/opt/htmldoc/bin/htmldoc
+ISA		:sh=	uname -p
+HASH		:sh=	echo \043
+GCC		=	$(HASH)
+#
+# These are for GCC
+#
+CC		=	gcc
+COPTFLAG	=	-O2
+sparc_CFLAGS	=	-Wall -m32 -mcpu=v8 -mtune=ultrasparc
+sparcv9_CFLAGS	=	-Wall -m64 -mcpu=v9 -mtune=ultrasparc -D_SYSCALL32
+i386_CFLAGS	=	-Wall -mcpu=pentium
+#
+# These are for Sun C (aka Forte aka SunONE)
+#
+$(GCC)CC		=	cc
+$(GCC)COPTFLAG		=	-xO2
+$(GCC)sparc_CFLAGS	=	-v -xarch=v8
+$(GCC)sparcv9_CFLAGS	=	-v -xarch=v9 -D_SYSCALL32
+$(GCC)i386_CFLAGS	=	-v
+#
+# Debugging, same for both compilers
+#
+$(NODEBUG)COPTFLAG	=	-g
+$(NODEBUG)DEBUG		=	-DDEBUG

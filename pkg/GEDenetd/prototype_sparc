@@ -1,0 +1,13 @@
+#
+# ident "@(#)prototype_sparc	1.11	02/04/19 GED"
+#
+# prototype file for the afe driver
+#
+!include prototype_com
+d none kernel ? ? ?
+d none kernel/drv ? ? ?
+d none kernel/drv/sparcv9 ? ? ?
+f none kernel/drv/afe=$TOP/obj.sparc/afe 0755 root sys
+f none kernel/drv/mxfe=$TOP/obj.sparc/mxfe 0755 root sys
+f none kernel/drv/sparcv9/afe=$TOP/obj.sparcv9/afe 0755 root sys
+f none kernel/drv/sparcv9/mxfe=$TOP/obj.sparcv9/mxfe 0755 root sys

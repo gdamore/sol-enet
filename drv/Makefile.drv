@@ -1,0 +1,30 @@
+#
+# ident	@(#)Makefile.drv 1.2	02/04/10 GED
+#
+# drv/Makefile.drv
+#
+
+all:	$(HDRS) $(SRCS) .WAIT $(MOD)
+
+lint:	$(HDRS)	$(SRCS) .WAIT $(LINTS)
+
+clean:
+	$(RM) $(OBJS) $(LINTS)
+
+clobber:
+	$(RM) $(MOD)
+
+ddict:	$(HDRS) $(SRCS)
+	$(DDICT) $(DDICTFLAGS) $(SRCS)
+
+$(MOD):	$(OBJS)
+	$(LD) -r $(LDFLAGS) -o $@ $(OBJS)
+
+$(TOP)/obj.$(ISA)/%.o:	%.c
+	$(CC) -c -o $@ $(CFLAGS) $(CPPFLAGS) $<
+
+$(TOP)/obj.$(ISA)/%.ln:	%.c
+	$(LINT) -c -dirout=$(TOP)/obj.$(ISA) $(LINTFLAGS) $(CPPFLAGS) $<
+
+include $(TOP)/Makefile.targ
+

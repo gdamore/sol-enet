@@ -1,0 +1,20 @@
+#
+# ident	@(#)Makefile.common 1.6	03/03/26 GED
+#
+# drv/Makefile.common
+#
+
+include	$(TOP)/Makefile.common
+
+LINTFLAGS	=	-erroff=E_BAD_PTR_CAST_ALIGN
+LINTFLAGS	+=	-nsmuxF $(CPPFLAGS)
+DDICTFLAGS	=	$(CPPFLAGS)
+
+CPPFLAGS	+=	-I $(TOP)/inc
+DEFS		=	-D_KERNEL $(DEBUG)
+CPPFLAGS	+=	$(DEFS)
+CFLAGS		+=	$($(ISA)_CFLAGS) $(COPTFLAG)
+MOD		=	$(TOP)/obj.$(ISA)/$(MODNAME)
+OBJS		=	$(SRCS:%.c=$(TOP)/obj.$(ISA)/%.o)
+LINTS		=	$(OBJS:%.o=%.ln)
+DISTSRCS	=	$(SRCS) Makefile

@@ -1,0 +1,114 @@
+<!DOCTYPE REFENTRY PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+<!ENTITY % commonents SYSTEM "smancommon.ent">
+%commonents;
+<!ENTITY % booktitles SYSTEM "booktitles.ent">
+%booktitles;
+]>
+<!-- @(#)etherdiag.1m.in 1.15 04/06/30 GED -->
+<refentry id="etherdiag-1m">
+<refmeta>
+	<refentrytitle>etherdiag</refentrytitle>
+	<manvolnum>1M</manvolnum>
+	<refmiscinfo class="date">30 June 2004</refmiscinfo>
+	<refmiscinfo class="sectdesc">Maintenance Commands</refmiscinfo>
+	<refmiscinfo class="software">%PKG% %VERSION%</refmiscinfo>
+	<refmiscinfo class="arch">generic</refmiscinfo>
+	<refmiscinfo class="copyright">Copyright (c) 2001-2004 by Garrett D'Amore.  All Rights Reserved</refmiscinfo>
+</refmeta>
+<refnamediv>
+	<refname>etherdiag</refname>
+	<refpurpose>diagnostic utility for Garrett's ethernet drivers</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<title>SYNOPSIS</title>
+	<cmdsynopsis><command>etherdiag</command><arg><option>d</option>&nbsp;<replaceable>interface</replaceable></arg><arg><option>v</option></arg>
+</cmdsynopsis>
+	<cmdsynopsis><command>etherdiag</command><arg choice="plain"><option>d</option>&nbsp;<replaceable>interface</replaceable></arg><arg choice="plain"><option>E</option></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>DESCRIPTION</title>
+	<para>The <citerefentry><refentrytitle>etherdiag</refentrytitle><manvolnum>1M</manvolnum></citerefentry> command is a diagnostic utility
+for troubleshooting network interfaces based on the
+<olink targetdocent="REFMAN7" localinfo="afe-7d"><citerefentry><refentrytitle>afe</refentrytitle><manvolnum>7D</manvolnum></citerefentry></olink> and
+<olink targetdocent="REFMAN7" localinfo="mxfe-7d"><citerefentry><refentrytitle>mxfe</refentrytitle><manvolnum>7D</manvolnum></citerefentry></olink> 
+fast ethernet drivers.</para>
+	<para>The first form displays information about the named <replaceable>interface</replaceable>.  If no <replaceable>interface</replaceable> is given, information about all supported interfaces on the system is listed.
+If the verbose flag is specified, then
+an increased amount of detail is displayed.</para>
+	<para>The second form dumps the contents of EEPROM for the given <replaceable>interface</replaceable>.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	<para>The following options are supported:</para>
+<variablelist termlength="narrow">
+<varlistentry><term remap="14"><option>d</option>&nbsp;<replaceable>interface</replaceable></term>
+<listitem><para>Uses the named interface, e.g. <literal>afe0</literal>.</para></listitem></varlistentry>
+
+<varlistentry><term><option>v</option></term>
+<listitem><para>Indicates that verbose output should be displayed.  Additional
+verbosity is enabled each time this option is included.</para>
+</listitem></varlistentry>
+
+<varlistentry><term><option>E</option></term>
+<listitem><para>Dumps the contents of EEPROM.</para>
+</listitem></varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>COPYRIGHT</title>
+<para>
+Copyright (c) 2001-2002 by Garrett D'Amore
+&lt;<literal>garrett@damore.org</literal>&gt;.
+All rights reserved.
+</para>
+<para>
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+</para>
+<orderedlist>
+<listitem><para>
+Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+</para></listitem>
+<listitem><para>
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+</para></listitem>
+<listitem><para>
+Neither the name of the author nor the names of any co-contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
+</para></listitem>
+</orderedlist>
+
+<para>
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS IS''
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<olink targetdocent="REFMAN1M" localinfo="ifconfig-1m"><citerefentry><refentrytitle>ifconfig</refentrytitle><manvolnum>1M</manvolnum></citerefentry></olink>,
+<olink targetdocent="REFMAN1M" localinfo="netstat-1m"><citerefentry><refentrytitle>netstat</refentrytitle><manvolnum>1M</manvolnum></citerefentry></olink>,
+<olink targetdocent="REFMAN4" localinfo="driver.conf-4"><citerefentry><refentrytitle>driver.conf</refentrytitle><manvolnum>4</manvolnum></citerefentry></olink>,
+<olink targetdocent="REFMAN7D" localinfo="afe-7d"><citerefentry><refentrytitle>afe</refentrytitle><manvolnum>7D</manvolnum></citerefentry></olink>,
+<olink targetdocent="REFMAN7D" localinfo="mxfe-7d"><citerefentry><refentrytitle>mxfe</refentrytitle><manvolnum>7D</manvolnum></citerefentry></olink>
+</para>
+</refsect1>
+
+</refentry>

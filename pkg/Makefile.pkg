@@ -1,0 +1,20 @@
+#
+# ident @(#)Makefile.pkg 1.3	02/05/16 GED
+#
+# pkg/Makefile.pkg
+#
+
+all:	$(PKGSRCS) $(COMMONSRCS) $(PKGARCHIVE) pkginfo
+	$(PKGMK) -a $(ARCH) -d $(PKGARCHIVE) -f prototype_$(ARCH) TOP=$(TOP)
+
+$(PKGARCHIVE):
+	test -d $@ || $(MKDIR) $@
+
+clean clobber:
+	$(RM) pkginfo
+	$(RM) -r $(PKGARCHIVE)/$(PKGNAME)
+
+pkginfo:	pkginfo_src
+	sed -e 's/<version>/$(VER),REV=$(REV)/' pkginfo_src > $@
+
+include $(TOP)/Makefile.targ

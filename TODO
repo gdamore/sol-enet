@@ -1,0 +1,109 @@
+#
+#ident	@(#)TODO 1.9	01/07/17 GED
+#
+ADMtek ethernet driver TODO list
+================================
+
+	1) DR/CPR/PM	- add support for DR and power management.  This
+			  will be a multistep process.  We may elect to
+			  only support the S8 interfaces.
+
+			  Note: on Solaris x86 (Solaris 8) only PCI
+			  hotplug is supported, and this limited subset
+			  is already functional in the driver (only
+			  DDI_DETACH/DDI_ATTACH need proper support.)
+
+	2) PCI tuning	- tune PCI performance parameters (burstsizes)
+
+	3) Buf tuning	- use esballoc and/or other mechanisms to reduce
+			  mblk copying operations, use DMA instead for
+			  large packets.
+
+			  Note: on faster machines (e.g. Pentium III or
+			  better), it may actually be faster to do the
+			  block copy than setup a DMA region.  This is
+			  especially true on SPARC platforms where IOMMU
+			  setup operations are involved with DMA mapping.
+
+			  Note: esballoc can create problems for DR.
+			  It must not be possible to unload a driver
+			  while outstanding esballoc'd drivers are
+			  upstream.  Handling this may create a need
+			  to introduce another lock on the receive side,
+			  further reducing the benefit of doing this.
+
+	4) hardening	- provide support for driver hardening entry
+			  points for S8 users.  This needs to not compromise
+			  functionality on pre-S8 systems.
+
+			  Note: as of Solaris 8, this may only be beneficial
+			  on SPARC (where an IOMMU helps guarantee integrity),
+			  but current low-end platforms lack the necessary
+			  support software for true hardening.)
+
+Completed items
+---------------
+	1) sparc	- the driver currently doesn't operate properly
+			  on a 64-bit sparc kernel (32-bit untested right
+			  now) -- we are seeing DVMA translation errors.
+			  Need to track this problem down and fix it.  Could
+			  be endianness, or something else.
+
+			  (This was tracked down to incorrect default mingnt
+			  and maxlat settings on ADMtek-based boards.
+			  Board manufacturers can correct this by updating
+			  their SROMs, and should contact me if they would
+			  like more complete information.)
+
+	2) phytimer	- add a timeout (or use GP timer on chip) to
+			  read MII regs and keep link state updated,
+			  also log changes so that the user knows about it.
+
+	6) comet	- right now only Centaur works properly.  The MII
+			  accesses need minor mods to work for Comet.
+			  Done, but as yet untested.  (I don't have a
+			  card with an actual Comet controller on it.)
+
+	9) tx restart	- wantw is currently not used, when the system
+			  runs out of buffers we expect to see stalls.
+
+	8) int tuning	- we generate an interrupt on every tx -- this
+			  is overkill - we only need a tx interrupt if we
+			  are waiting for packets.
+
+	10) MII tweaks	- allow user to specify link speed and mode, to
+			  override autonegotiation. (100BT-4 not tested)
+
+	11) docs	- package them up, add documentation for tunability
+			  and supported cards.
+
+	12) tunability	- some of the parameters should be tunable via
+			  driver.conf properties, fix this.
+
+	13) utility	- it would be nice to have a diag utility that
+			  can put the card into loopback, check it out,
+			  exercise it, report the PHY registers, etc.
+			  Donald Becker has a utility for Linux that
+			  may provide some example features.
+
+			  Note: loopback support is still missing.
+
+Closed items
+------------
+	7) other chips	- look at other chips next -- the next one will
+			  probably be a PNICII or Macronix chip, depending
+			  on what hardware I can get ahold of.  Some parts of
+			  this code will have to be modified to be more
+			  general, specifically the EEPROM and MII access
+			  stuff.
+
+			  Note: I have a Kingston KNE-111TX which is a PNIC2.
+			  I am interested in acquiring other hardware to
+			  develop and test with.  Contact me if you can
+			  help!
+
+	I have since created a new driver, mxfe, which supports both the
+	PNIC-II and the MX98715 family chips.  (Embryonic support is also
+	present for the MX98713 family.)  PNIC support will go into a new
+	PNIC driver.  I have new cards as well, including the MX98715AEC,
+	PNIC-II, and LC82C169 original PNIC.

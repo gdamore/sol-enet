@@ -1,0 +1,76 @@
+PREREQUISITES
+-------------
+
+>>> If you have not done so already, read the README file and User's Guide
+>>> before proceeding!
+>>>
+>>> These are rough directions and assume that you have a basic understanding
+>>> of Solaris System Administration tasks.  You should know how to use the
+>>> compiler and tools to build software, and you should know how to use
+>>> the network administration utilities such as ifconfig(1M) and snoop(1M).
+>>> If you lack these skills, then STOP HERE.  THIS PACKAGE IS NOT FOR YOU.
+>>> Instead, just use the appropriate binary package.
+>>>
+>>> Note that there are binary packages available on the web site as well.
+>>> You can save yourself some trouble by just installing the binary
+>>> packages.  I will not generally provide assistance to folks trying
+>>> to build from source -- its assumed you already know what you're doing.
+
+INSTALL
+-------
+
+To install from source, you *MUST* use either gcc 3.2.1 or newer, or
+Sun Forte C 6 or newer.  In this release, gcc is presumed to be the default.
+Older compilers will *NOT* work.
+
+Steps (assuming the GNU C Compiler):
+
+	1) ensure that "gcc" is on your path and is GCC 3.2.1 or newer.
+
+	2) ensure that "make" is on your path, and is /usr/ccs/bin/make.
+	   NOTE: YOU MUST USE SUN'S MAKE, GNUMAKE WILL NOT WORK!!!
+
+	3) in this directory, type "make package"
+
+	4) this will create a directory called "pkgdir.i386" or "pkgdir.sparc",
+	   depending on which platform you are building on.
+
+	5) become root using the "su" program
+
+	6) pkgadd -d pkgdir.`uname -p` all
+
+	7) you can now use the device as any ethernet; create a file for it
+	   as /etc/hostname.afe0 (or whatever) and stick an IP address in
+	   it.
+
+	8) You may wish to reboot at this point to ensure that the
+	   driver is plumbed properly underneath IP.  (If you are saavy with
+	   ifconfig(1M), you can skip this step, but you knew that, right?)
+
+To build using the Forte (aka SunONE) compilers:
+
+	1) ensure that "cc" is on your path and is Forte 6 or newer.  It
+	   *must not* be /usr/ucb/cc.  (Take /usr/ucb out of your path
+	   for this build.  In fact, I recommend taking /usr/ucb out of
+	   your path forever.  If you still use some utilities there, create
+	   a specific alias.  /usr/ucb is "evil" in many regards.)
+
+	2) ensure that "make" is on your path, and is /usr/ccs/bin/make.
+	   NOTE: YOU MUST USE SUN'S MAKE, GNUMAKE WILL NOT WORK!!!
+
+	3) in this directory, type "make -e GCC= package"
+	   NOTE: the full arguments here are required to ensure that the
+	   Makefiles do not attempt to use GCC.
+
+	4) Follow the above procedure starting at step 4.
+
+UNINSTALL
+---------
+
+To remove the package, remove any /etc/hostname.afeXX and /etc/hostname.mxfeXX
+references (unplumb the network), and then run
+
+	# pkgrm GEDenetd GEDenetu GEDenetm
+
+You may need to reboot to properly clean up, but saavy users can use "ifconfig"
+and "modunload" to skip this step.

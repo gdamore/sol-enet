@@ -1,0 +1,10 @@
+#
+# ident "@(#)prototype_i386	1.11	02/04/19 GED"
+#
+# prototype file for the afe driver
+#
+!include prototype_com
+d none kernel ? ? ?
+d none kernel/drv ? ? ?
+f none kernel/drv/afe=$TOP/obj.i386/afe 0755 root sys
+f none kernel/drv/mxfe=$TOP/obj.i386/mxfe 0755 root sys

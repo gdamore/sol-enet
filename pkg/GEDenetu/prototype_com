@@ -1,0 +1,17 @@
+#
+# ident	"@(#)prototype_com	1.8	03/06/03 GED"
+#
+# prototype file for ethernet drivers
+#
+i pkginfo
+i copyright=$TOP/pkg/copyright
+#
+# Man pages
+#
+d none GEDnet 0755 root sys
+d none GEDnet/include 0755 bin bin
+d none GEDnet/include/sys 0755 bin bin
+f none GEDnet/include/sys/afe.h=$TOP/inc/sys/afe.h 0644 bin bin
+f none GEDnet/include/sys/mxfe.h=$TOP/inc/sys/afe.h 0644 bin bin
+f none GEDnet/include/sys/mii.h=$TOP/inc/sys/mii.h 0644 bin bin
+d none GEDnet/bin 0755 bin bin

@@ -1,0 +1,18 @@
+#
+# ident "@(#)pkginfo_src 1.13	02/04/12 GED"
+#
+# pkginfo file for afe driver
+#
+PKG=GEDenetd
+NAME=Garrett's Solaris Ethernet Drivers
+ARCH=<arch>
+VERSION=<version>
+CATEGORY=system
+DESC=Drivers for various ethernet devices.
+VENDOR=Garrett D'Amore
+HOTLINE=This package is unsupported.
+EMAIL=garrett@damore.org
+CLASSES=none
+BASEDIR=/
+MAXINST=9999
+

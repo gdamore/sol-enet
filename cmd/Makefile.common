@@ -1,0 +1,17 @@
+#
+# ident	@(#)Makefile.common 1.3	03/03/26 GED
+#
+# cmd/Makefile.common
+#
+
+include	$(TOP)/Makefile.common
+
+LINTFLAGS	=
+LINTFLAGS	+=	$(CPPFLAGS)
+CPPFLAGS	+=	-I $(TOP)/inc
+CPPFLAGS	+=	$(DEFS) $(DEBUG)
+CFLAGS		+=	$($(ISA)_CFLAGS) $(COPTFLAG)
+PROG		=	$(TOP)/obj.$(ISA)/$(PROGNAME)
+OBJS		=	$(SRCS:%.c=$(TOP)/obj.$(ISA)/%.o)
+LINTS		=	$(OBJS:%.o=%.ln)
+DISTSRCS	=	$(SRCS) Makefile

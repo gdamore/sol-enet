@@ -1,0 +1,15 @@
+#
+# ident "%Z%%M%	%I%	%E% GED"
+#
+# depend file for ethernet drivers
+#
+# We require some basic stuff, particularly the GLD.
+#
+P SUNWcar	Core Architecture, (Root)
+P SUNWcsr	Core Solaris, (Root)
+#
+# The following drivers/packages are known to be incompatible with
+# this driver.  Don't install them on the same system.
+#
+I GEDafed	AFE Fast Ethernet Driver
+I GEDmxfd	MXFE Fast Ethernet Driver
