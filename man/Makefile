@@ -1,5 +1,5 @@
 #
-# ident	"@(#)Makefile	1.10	02/05/21 GED"
+# $Id: Makefile,v 1.2 2004/08/27 23:37:46 gdamore Exp $
 #
 # man/Makefile
 #
