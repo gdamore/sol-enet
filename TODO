@@ -1,5 +1,5 @@
 #
-#ident	@(#)TODO 1.9	01/07/17 GED
+#ident	@(#)$Id: TODO,v 1.2 2004/08/27 23:05:30 gdamore Exp $
 #
 ADMtek ethernet driver TODO list
 ================================
@@ -12,6 +12,14 @@ ADMtek ethernet driver TODO list
 			  hotplug is supported, and this limited subset
 			  is already functional in the driver (only
 			  DDI_DETACH/DDI_ATTACH need proper support.)
+
+			  Update: 8/27/2004: CPR and DR have been tested,
+			  on SPARC so this works.  Power management is
+			  a different story -- not even the Sun NICs do
+			  this right now.  Its probably of little value
+			  anyway -- the power consumed by a typical ethernet
+			  chip is usually negligble.  (Some high-end gigabit
+			  transceivers consume a lot of power, though.)
 
 	2) PCI tuning	- tune PCI performance parameters (burstsizes)
 
@@ -40,6 +48,12 @@ ADMtek ethernet driver TODO list
 			  on SPARC (where an IOMMU helps guarantee integrity),
 			  but current low-end platforms lack the necessary
 			  support software for true hardening.)
+
+			  Update 8/27/2004: The driver hardening framework
+			  was never fully implemented in Solaris, so it
+			  is of little or no value.  Solaris 10 may change
+			  this framework significantly, creating a desire
+			  to have this functionality implemented.
 
 Completed items
 ---------------

@@ -1,5 +1,5 @@
 
-@(#)README	1.8	03/03/26 GED
+@(#)$Id: README,v 1.2 2004/08/27 23:05:30 gdamore Exp $
 
 Garrett's Fast Ethernet Drivers README
 ======================================
@@ -31,7 +31,7 @@ has also done some testing with the EN5251.
 
 For more up-to-date information, please see
 
-	http://garrett.damore.org/software/ethernet/support.shtml
+	http://sol-enet.sourceforge.net/
 
 These drivers support Solaris 8 and later on SPARC, and Solaris 7 and later
 on x86 platforms.
