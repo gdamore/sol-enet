@@ -1,5 +1,5 @@
 #
-# ident	@(#)Makefile 1.21	02/05/22 GED
+# $Id: Makefile,v 1.2 2004/08/27 23:40:12 gdamore Exp $
 #
 # Makefile
 #
