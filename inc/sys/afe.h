@@ -32,7 +32,7 @@
 #ifndef	_AFE_H
 #define	_AFE_H
 
-#ident	"@(#)afe.h	1.30	04/06/30 GED"
+#ident	"@(#)$Id: afe.h,v 1.2 2004/08/27 23:39:34 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {

@@ -32,7 +32,7 @@
 #ifndef	_AFEIMPL_H
 #define	_AFEIMPL_H
 
-#ident	"@(#)afeimpl.h	1.51	04/06/30 GED"
+#ident	"@(#)$Id: afeimpl.h,v 1.2 2004/08/27 23:39:34 gdamore Exp $"
 
 #ifdef	_KERNEL
 

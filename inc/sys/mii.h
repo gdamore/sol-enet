@@ -32,7 +32,7 @@
 #ifndef	_MII_H
 #define	_MII_H
 
-#ident	"%Z%%M%	%I%	%E% GED"
+#ident	"@(#)$Id: mii.h,v 1.2 2004/08/27 23:39:34 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {
