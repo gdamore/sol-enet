@@ -1,5 +1,5 @@
 #
-# ident	"@(#)Makefile	1.9	02/05/21 GED"
+# $Id: Makefile,v 1.2 2004/08/27 23:33:42 gdamore Exp $
 #
 
 TOP		= ..

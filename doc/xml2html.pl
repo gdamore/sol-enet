@@ -1,5 +1,10 @@
 #!/usr/bin/perl
 
+# $Id: xml2html.pl,v 1.2 2004/08/27 23:33:42 gdamore Exp $
+#
+# This uses the XMLLite module to convert a pseudo-xml document to HTML.
+#
+
 use strict;
 use XMLLite;
 use Getopt::Std;

@@ -1,5 +1,5 @@
 #
-# ident	"%Z%%M%	%I%	%E% GED"
+# $Id: XMLLite.pm,v 1.2 2004/08/27 23:33:42 gdamore Exp $
 #
 # Copyright (c) 2002-2004 by Garrett D'Amore <garrett@damore.org>.
 # All rights reserved.
