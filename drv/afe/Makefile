@@ -1,5 +1,5 @@
 #
-# ident	@(#)Makefile 1.10	03/06/03 GED
+# $Id: Makefile,v 1.2 2004/08/27 23:02:29 gdamore Exp $
 #
 # drv/afe/Makefile
 #

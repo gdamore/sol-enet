@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)afe.c	1.107	04/06/30 GED"
+#ident	"@(#)$Id: afe.c,v 1.2 2004/08/27 23:02:29 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -245,11 +245,13 @@ static struct dev_ops afe_devops = {
 /*
  * Module linkage information.
  */
-#define	AFE_IDENT	"AFE Fast Ethernet v1.107"
+#define	AFE_IDENT	"AFE Fast Ethernet"
+static char afe_ident[MODMAXNAMELEN];
+static char *afe_version;
 
 static struct modldrv afe_modldrv = {
 	&mod_driverops,			/* drv_modops */
-	AFE_IDENT,			/* drv_linkinfo */
+	afe_ident,			/* drv_linkinfo */
 	&afe_devops			/* drv_dev_ops */
 };
 
@@ -302,6 +304,22 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
+	char	*rev = "$Revision: 1.2 $";
+	char	*ident = afe_ident;
+
+	/* this technique works for both RCS and SCCS */
+	strcpy(ident, AFE_IDENT " v");
+	ident += strlen(ident);
+	afe_version = ident;
+	while (*rev) {
+		if (strchr("0123456789.", *rev)) {
+			*ident = *rev;
+			ident++;
+			*ident = 0;
+		}
+		rev++;
+	}
+
 	return (mod_install(&afe_modlinkage));
 }
 
@@ -527,7 +545,7 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	}
 
 	afep->afe_forcefiber = ddi_getprop(DDI_DEV_T_ANY, afep->afe_dip,
-	    DDI_PROP_CANSLEEP, "fiber", -1);
+	    DDI_PROP_CANSLEEP, "fiber", 0);
 
 	/*
 	 * XXX: Add in newer MII properties here.
@@ -3468,7 +3486,7 @@ afe_ndinit(afe_t *afep)
 	afe_ndadd(afep, "link_speed", afe_ndgetlinkspeed, NULL, 0, 0);
 	afe_ndadd(afep, "link_mode", afe_ndgetlinkmode, NULL, 0, 0);
 	afe_ndadd(afep, "driver_version", afe_ndgetstring, NULL,
-	    (intptr_t)"1.107", 0);
+	    (intptr_t)afe_version, 0);
 	afe_ndadd(afep, "adv_autoneg_cap", afe_ndgetadv, afe_ndsetadv,
 	    (intptr_t)&afep->afe_adv_aneg, 0);
 	afe_ndadd(afep, "adv_100T4_cap", afe_ndgetadv, afe_ndsetadv,
