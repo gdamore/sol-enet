@@ -76,7 +76,7 @@ Please send your comments to me at
 
 <section>Copyright</section>
 <p>
-Copyright &copy; 2002, 2003 Garrett D'Amore,
+Copyright &copy; 2002 - 2004 Garrett D'Amore,
 &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
 </p>
 <p>
@@ -127,7 +127,7 @@ is included with Solaris 8 10/00 and newer.
 You must also have a device which is supported by these drivers,
 which can be either a PCI card, CardBus card, or an on-board device.  The most
 up-to-date list of supported devices can be found on-line at <a
-href="http://garrett.damore.org/software/ethernet/support.shtml">http://garrett.damore.org/software/ethernet/support.shtml</a>
+href="http://sol-enet.sourceforge.net/support.shtml">http://sol-net.sourceforge.net/support.shtml</a>
 </p>
 
 <p>
@@ -141,13 +141,21 @@ this requirement.)
 </p>
 
 <p>
-CardBus slots are available on systems from some vendors, and support
-CardBus devices which are compatible with these drivers.
-Note also that the slot must support the full 32-bit CardBus
-standard -- many systems have only support for 16-bit PC cards, and hence
-cannot support CardBus devices.  Check with your system vendor for more
-information.
+CardBus slots are available on some systems from
+<a href="http://www.tadpolecomputer.com/">Tadpole Computer</a>,
+and Tadpole includes software which makes the CardBus
+slots behave as if they were PCI slots (when 32-bit PC cards
+cards are inserted.)  As a result, it is possible to use these
+drivers with certain 32-bit PC cards on these systems.
 </p>
+
+<note>
+Mobile systems from other vendors may have
+CardBus slots, but may not have the necessary software
+drivers.  (At the time of this writing, Sun does not provide a
+CardBus compatible software stack with Solaris.) Check with your system
+vendor for more information.
+</note>
 
 <warning>
 These drivers do not support removal of CardBus devices
@@ -161,7 +169,7 @@ information about the slots in your particular system.
 </p>
 
 <p>
-You will also need an ethernet network to which to connect.  This can
+You will also need an ethernet network with which to connect.  This can
 be in the form of a hub, switch, bridge, or direct connection to
 another computer using an ethernet cross-over cable.  If you need
 help, you should contact your network administrator.
@@ -196,7 +204,7 @@ drivers.</p>
 <p>
 In order to install the software, you must first obtain it.  Fortunately,
 the device drivers you will need are freely available on the Internet at the URL
-<a href="http://garrett.damore.org/software/ethernet/">http://garrett.damore.org/software/ethernet/</a>.
+<a href="http://sol-enet.sourceforge.net/">http://sol-enet.sourceforge.net/</a>.
 </p>
 <p>
 There are several different files you can download.  Typically you will
@@ -722,7 +730,7 @@ terms:
 </p>
 
 <p>
-Copyright &copy; 2001-2003 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+Copyright &copy; 2001-2004 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
 All rights reserved.
 </p>
 <p>
@@ -812,7 +820,7 @@ none is obligatory.  The author has an account with
 <a href="http://www.paypal.com/">PayPal</a>, so you can donate
 that way.  The easiest way to do this is to click the appropriate link
 on the home page for these drivers at
-<a href="http://garrett.damore.org/software/ethernet">http://garrett.damore.org/software/ethernet/</a>.
+<a href="http://sol-enet.sourceforge.net/">http://sol-enet.sourceforge.net/</a>.
 <p/>
 </li>
 
