@@ -1,5 +1,5 @@
 #
-# $Id: Makefile.common,v 1.4 2005/11/05 02:09:44 gdamore Exp $
+# $Id: Makefile.common,v 1.5 2005/11/05 02:56:31 gdamore Exp $
 #
 # Makefile.common
 #
@@ -36,10 +36,10 @@ GCC		=	$(HASH)
 #
 CC		=	gcc
 COPTFLAG	=	-O2
-sparc_CFLAGS	=	-Wall -m32 -march=v8 -mtune=ultrasparc
-sparcv9_CFLAGS	=	-Wall -m64 -march=v9 -mtune=ultrasparc -D_SYSCALL32
+sparc_CFLAGS	=	-Wall -m32 -mtune=ultrasparc
+sparcv9_CFLAGS	=	-Wall -m64 -mtune=ultrasparc -D_SYSCALL32
 i386_CFLAGS	=	-Wall -m32 -march=i686
-amd64_CFLAGS	=	-Wall -m64 -march=opteron
+amd64_CFLAGS	=	-Wall -m64 -march=opteron -D_SYSCALL32
 #
 # These are for Sun C (aka Forte aka SunONE)
 #
