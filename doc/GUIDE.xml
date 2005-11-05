@@ -1,143 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
-    <!ENTITY version "1.0.2">
-    <!ENTITY date "November 4, 2005">
-]>
-<!--	$Id: GUIDE.xml,v 1.4 2005/11/05 02:09:44 gdamore Exp $ -->
-<book>
-  <bookinfo>
-    <title>AFE and MXFE Ethernet Drivers</title>
-    <subtitle>An optional subtitle</subtitle>
-    <authorgroup>
-      <author>
-	<firstname>Garrett</firstname>
-	<surname>D'Amore</surname>
-	<affiliation>
-	  <address>
-	    <email>garrett@damore.org</email>
-	  </address>
-	</affiliation>
-      </author>
-    </authorgroup>
-    <edition>Version &version;</edition>
-    <copyright>
-      <year>2002-2005</year>
-      <holder>Garrett D'Amore</holder>
-    </copyright>
-    <keywordset>
-      <keyword>mxfe</keyword>
-      <keyword>afe</keyword>
-      <keyword>Solaris</keyword>
-      <keyword>ethernet</keyword>
-      <keyword>driver</keyword>
-    </keywordset>
-  </bookinfo>
-</book>
+<!--	ident	"@(#)$Id: GUIDE.xml,v 1.5 2005/11/05 02:47:14 gdamore Exp $ -->
+<html>
+<head>
+<title>AFE and MXFE Ethernet Drivers</title>
+<author>Garrett D'Amore</author>
+<docnumber>Version <version/></docnumber>
+<copyright>Copyright 2002-2004</copyright>
+</head>
+<body>
+<chaphead>About This Book</chaphead>
+<p>
+This book describes installing, configuring, and troubleshooting the
+<tt>afe</tt> and <tt>mxfe</tt> ethernet drivers for Solaris<sup>TM</sup>
+platforms.
+</p>
+<p>
+These ethernet drivers support a number of low-cost PCI-based
+fast ethernet controllers, which are used in quite a variety of
+network cards and on-board network interfaces. 
+Specifically, these drivers support devices based on the ADMtek Centaur
+and Comet controllers, the Macronix 98715 family, and the Lite-On PNIC-II
+controllers.
+</p>
+<section>Intended Audience</section>
+<p>
+This book is intended for system administrators administering ethernet
+devices.  You should be familiar with basic Solaris system administration.
+If you do not have these skills, you may wish to ask a more experienced
+system administrator for assistance.  There are also numerous classes
+offered throughout the world that can help with this.
+</p>
 
-<chapter>
-  <title>About This Book</title>
-  <para>
-    This book describes installing, configuring, and troubleshooting the
-    <filename>afe</filename> and <filename>mxfe</filename> ethernet drivers
-    for Solaris&trademark; platforms.
-  </para>
-  <para>
-    These ethernet drivers support a number of low-cost PCI-based
-    fast ethernet controllers, which are used in quite a variety of
-    network cards and on-board network interfaces. 
-    Specifically, these drivers support devices based on the ADMtek Centaur
-    and Comet controllers, the Macronix 98715 family, and the Lite-On PNIC-II
-    controllers.
-  </para>
-  <section>
-    <title>Intended Audience</title>
-    <para>
-      This book is intended for system administrators administering ethernet
-      devices.  You should be familiar with basic Solaris system
-      administration.  If you do not have these skills, you may wish to ask
-      a more experienced system administrator for assistance.  There are also
-      numerous classes offered throughout the world that can help with this.
-    </para>  
-    <para>
-      In order to perform the tasks outlined in this document, you must have
-      <literal>root</literal> privileges for your system.
-    </para>
-  </section>
-  <section>
-    <title>Typographic Conventions</title>
-    <para>
-      The following table lists the typographic conventions used in this
-      manual.
-    </para>
-    <informaltable frame="none">
-      <tgroup cols="2">
-        <thead>
-          <row>
-            <entry>Description</entry>
-            <entry>Appearance</entry>
-          </row>
-        </thead>
-        <tbody>
-	  <row>
-            <entry>Caution</entry>
-            <entry><caution><para>This cautions the reader.</para>
-	    </caution></entry>
-          </row>
-          <row>
-	    <entry>Note</entry>
-            <entry><note><para>This is a note.</para></note></entry>
-          </row>
-          <row>
-            <entry>File Names</entry>
-            <entry><filename>/etc/passwd</filename></entry>
-          </row>
-	  <row>
-            <entry>Command Lines</entry>
-	    <entry><command>showrev -p</command></entry>
-          </row>
-          <row>
-            <entry><foreignphrase>Prompt</foreignphrase> for root user.</entry>
-            <entry>sh#</entry>
-          </row>
-	  <row>
-	    <entry><foreignphrase>Prompt</foreignphrase> for ordinary user
-	    under <literal>csh</literal></entry>
-	    <entry>csh$</entry>
-	  </row>
-          <row>
-            <entry>Environment Variables</entry>
-            <entry><envar>VARIABLE</envar></entry>
-          </row>
-          <row>
-            <entry>Code Example</entry>
-            <entry><programlisting><sgmltag class="starttag">para</sgmltag>Beginning and end of paragraph<sgmltag class="endtag">para</sgmltag></programlisting></entry> 
-          </row>
-        </tbody>
-      </tgroup>
-    </informaltable>
-  </section>
-  
-  <section>
-    <title>Feedback</title>
-    <para>
-      I welcome feedback regarding this document, and the software which
-      it documents, in the hope that the end product will be improved.
-      Please send your comments to me at 
-      <email>garrett@damore.org</email>.
-   </para>
- </section>
- <section>
-   <title>Copyright</title>
-   <para>
-     Copyright &copyright; 2002 - 2005 Garrett D'Amore,
-     <email>garrett@damore.org</email>.
-   </para>
-   <para>
-     All rights reserved.  Redistribution and use in source, binary, and
-     printed forms, with or without modification, are permitted  provided
-     that the following conditions are met:
-   </para>
+<p>
+In order to perform the tasks outlined in this document, you must have
+<tt>root</tt> privileges for your system.
+</p>
+
+<section>Typographic Conventions</section>
+<p>
+The following table lists the typographic conventions used in this manual.
+</p>
+<p>
+<table bogus cellpadding="5" width="100%" border="1">
+<tr>
+<th>Typeface</th>
+<th>Meaning</th>
+<th>Example</th>
+</tr>
+<tr>
+<td><tt>AaBbCc123</tt></td>
+<td>On-screen output, commands, files and directories.</td>
+<td>Use <tt>showrev -p</tt> to list the patches on your system.</td>
+</tr>
+<tr>
+<td><entry>AaBbCc123</entry></td>
+<td>User input as typed exactly in on-screen output and examples.</td>
+<td><tt>csh% </tt><entry>pkginfo</entry></td>
+</tr>
+<tr>
+<td><var>AaBbCc12</var></td>
+<td>Variable text, used in examples for text that should be replaced with a real value.</td>
+<td><tt>csh% </tt><entry>cd</entry> <var>directory</var></td>
+</tr>
+</table>
+</p>
+<p>
+</p>
+<section>Feedback</section>
+<p>
+I welcome feedback regarding this document, and the software which
+it documents, in the hope that the end product will be improved.
+Please send your comments to me at 
+&lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+</p>
+
+<section>Copyright</section>
+<p>
+Copyright &copy; 2002 - 2004 Garrett D'Amore,
+&lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+</p>
+<p>
+All rights reserved.  Redistribution and use in source, binary, and
+printed forms, with or without modification, are permitted  provided
+that the following conditions are met:
+</p>
 <ol>
 <li>Redistributions in any form must retain the above copyright
 notice, this list of conditions and the following disclaimer.</li>
@@ -784,7 +730,7 @@ terms:
 </p>
 
 <p>
-Copyright &copy; 2001-2005 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+Copyright &copy; 2001-2004 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
 All rights reserved.
 </p>
 <p>
@@ -881,3 +827,4 @@ on the home page for these drivers at
 </ol>
 
 </body>
+</html>
