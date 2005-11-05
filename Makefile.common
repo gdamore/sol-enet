@@ -1,10 +1,10 @@
 #
-# $Id: Makefile.common,v 1.3 2004/08/30 19:08:20 gdamore Exp $
+# $Id: Makefile.common,v 1.4 2005/11/05 02:09:44 gdamore Exp $
 #
 # Makefile.common
 #
 
-VER		=	1.0.3
+VER		=	1.0.4
 REV		:sh=	date '+%Y.%m.%d.%H.%M'
 LINT		=	lint
 LINTFLAGS	=	-erroff=E_BAD_PTR_CAST_ALIGN
@@ -36,9 +36,10 @@ GCC		=	$(HASH)
 #
 CC		=	gcc
 COPTFLAG	=	-O2
-sparc_CFLAGS	=	-Wall -m32 -mcpu=v8 -mtune=ultrasparc
-sparcv9_CFLAGS	=	-Wall -m64 -mcpu=v9 -mtune=ultrasparc -D_SYSCALL32
-i386_CFLAGS	=	-Wall -mcpu=pentium
+sparc_CFLAGS	=	-Wall -m32 -march=v8 -mtune=ultrasparc
+sparcv9_CFLAGS	=	-Wall -m64 -march=v9 -mtune=ultrasparc -D_SYSCALL32
+i386_CFLAGS	=	-Wall -m32 -march=i686
+amd64_CFLAGS	=	-Wall -m64 -march=opteron
 #
 # These are for Sun C (aka Forte aka SunONE)
 #
@@ -46,7 +47,8 @@ $(GCC)CC		=	cc
 $(GCC)COPTFLAG		=	-xO2
 $(GCC)sparc_CFLAGS	=	-v -xarch=v8
 $(GCC)sparcv9_CFLAGS	=	-v -xarch=v9 -D_SYSCALL32
-$(GCC)i386_CFLAGS	=	-v
+$(GCC)i386_CFLAGS	=	-v -xarch=pentium_pro
+$(GCC)amd64_CFLAGS	=	-v -xarch=amd64
 #
 # Debugging, same for both compilers
 #

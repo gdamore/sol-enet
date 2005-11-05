@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the Macronix 98715
  *
- * Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.4 2005/11/05 01:51:06 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.5 2005/11/05 02:09:44 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -307,7 +307,7 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.4 $";
+	char	*rev = "$Revision: 1.5 $";
 	char	*ident = mxfe_ident;
 
         /* this technique works for both RCS and SCCS */

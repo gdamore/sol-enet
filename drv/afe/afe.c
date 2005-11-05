@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the ADMtek Centaur
  *
- * Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.3 2005/11/05 01:51:06 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.4 2005/11/05 02:09:44 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -304,7 +304,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.3 $";
+	char	*rev = "$Revision: 1.4 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */

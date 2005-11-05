@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.2 2004/08/27 23:40:12 gdamore Exp $
+# $Id: Makefile,v 1.3 2005/11/05 02:09:44 gdamore Exp $
 #
 # Makefile
 #
@@ -18,7 +18,7 @@ clobber		:=	TARGET=clobber
 distsrcs	:=	TARGET=distsrcs
 
 sparc_ARCHS	=	sparc sparcv9
-i386_ARCHS	=	i386
+i386_ARCHS	=	i386 amd64
 ARCH		=	$(HOST_ARCH:-%=%)
 ARCHS_LIST	=	$(HOST_ARCH:-%=%_ARCHS)
 ARCHS		=	${${ARCHS_LIST}}

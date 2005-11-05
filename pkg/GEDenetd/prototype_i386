@@ -8,3 +8,5 @@ d none kernel ? ? ?
 d none kernel/drv ? ? ?
 f none kernel/drv/afe=$TOP/obj.i386/afe 0755 root sys
 f none kernel/drv/mxfe=$TOP/obj.i386/mxfe 0755 root sys
+f none kernel/drv/amd64/afe=$TOP/obj.amd64/afe 0755 root sys
+f none kernel/drv/amd64/mxfe=$TOP/obj.amd64/mxfe 0755 root sys
