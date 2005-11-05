@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.3 2004/08/30 18:16:46 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.4 2005/11/05 01:51:06 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -307,7 +307,7 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.3 $";
+	char	*rev = "$Revision: 1.4 $";
 	char	*ident = mxfe_ident;
 
         /* this technique works for both RCS and SCCS */
@@ -674,7 +674,7 @@ mxfe_detach(dev_info_t *dip, ddi_detach_cmd_t cmd)
 		mxfe_stop(macinfo);
 
 		/* clean up and shut down device */
-		ddi_remove_intr(dip, 0, &macinfo->gldm_cookie);
+		ddi_remove_intr(dip, 0, macinfo->gldm_cookie);
 
 		/* FIXME: delete properties */
 

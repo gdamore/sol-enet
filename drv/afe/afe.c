@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.2 2004/08/27 23:02:29 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.3 2005/11/05 01:51:06 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -304,7 +304,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.2 $";
+	char	*rev = "$Revision: 1.3 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
@@ -676,7 +676,7 @@ afe_detach(dev_info_t *dip, ddi_detach_cmd_t cmd)
 		afe_stop(macinfo);
 
 		/* clean up and shut down device */
-		ddi_remove_intr(dip, 0, &macinfo->gldm_cookie);
+		ddi_remove_intr(dip, 0, macinfo->gldm_cookie);
 
 		/* FIXME: delete properties */
 
