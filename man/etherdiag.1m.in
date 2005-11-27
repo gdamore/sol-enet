@@ -4,16 +4,16 @@
 <!ENTITY % booktitles SYSTEM "booktitles.ent">
 %booktitles;
 ]>
-<!-- @(#)$Id: etherdiag.1m.in,v 1.2 2004/08/27 23:37:47 gdamore Exp $ -->
+<!-- @(#)$Id: etherdiag.1m.in,v 1.3 2005/11/27 01:10:30 gdamore Exp $ -->
 <refentry id="etherdiag-1m">
 <refmeta>
 	<refentrytitle>etherdiag</refentrytitle>
 	<manvolnum>1M</manvolnum>
-	<refmiscinfo class="date">27 August 2004</refmiscinfo>
+	<refmiscinfo class="date">26 November 2005</refmiscinfo>
 	<refmiscinfo class="sectdesc">Maintenance Commands</refmiscinfo>
 	<refmiscinfo class="software">%PKG% %VERSION%</refmiscinfo>
 	<refmiscinfo class="arch">generic</refmiscinfo>
-	<refmiscinfo class="copyright">Copyright (c) 2001-2004 by Garrett D'Amore.  All Rights Reserved</refmiscinfo>
+	<refmiscinfo class="copyright">Copyright (c) 2001-2005 by Garrett D'Amore.  All Rights Reserved</refmiscinfo>
 </refmeta>
 <refnamediv>
 	<refname>etherdiag</refname>
@@ -24,8 +24,6 @@
 	<cmdsynopsis><command>etherdiag</command><arg><option>d</option>&nbsp;<replaceable>interface</replaceable></arg><arg><option>v</option></arg>
 </cmdsynopsis>
 	<cmdsynopsis><command>etherdiag</command><arg choice="plain"><option>d</option>&nbsp;<replaceable>interface</replaceable></arg><arg choice="plain"><option>n</option>&nbsp;<replaceable>parameters</replaceable></arg>
-</cmdsynopsis>
-	<cmdsynopsis><command>etherdiag</command><arg choice="plain"><option>d</option>&nbsp;<replaceable>interface</replaceable></arg><arg choice="plain"><option>E</option></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 <refsect1>
@@ -38,7 +36,7 @@ fast ethernet drivers.</para>
 	<para>The first form displays information about the named <replaceable>interface</replaceable>.  If no <replaceable>interface</replaceable> is given, information about all supported interfaces on the system is listed.
 If the verbose flag is specified, then
 an increased amount of detail is displayed.</para>
-	<para>The second form dumps the contents of EEPROM for the given <replaceable>interface</replaceable>.</para>
+	<para>The second form is used to display or change device parameters for the given <replaceable>interface</replaceable>.</para>
 </refsect1>
 
 <refsect1>
@@ -65,16 +63,12 @@ command.)  </listitem></varlistentry>
 verbosity is enabled each time this option is included.</para>
 </listitem></varlistentry>
 
-<varlistentry><term><option>E</option></term>
-<listitem><para>Dumps the contents of EEPROM.</para>
-</listitem></varlistentry>
-
 </variablelist>
 </refsect1>
 
 <refsect1><title>COPYRIGHT</title>
 <para>
-Copyright (c) 2001-2004 by Garrett D'Amore
+Copyright (c) 2001-2005 by Garrett D'Amore
 &lt;<literal>garrett@damore.org</literal>&gt;.
 All rights reserved.
 </para>

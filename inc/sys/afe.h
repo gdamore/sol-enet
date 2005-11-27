@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the ADMtek Centaur
  *
- * Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,27 +32,11 @@
 #ifndef	_AFE_H
 #define	_AFE_H
 
-#ident	"@(#)$Id: afe.h,v 1.2 2004/08/27 23:39:34 gdamore Exp $"
+#ident	"@(#)$Id: afe.h,v 1.3 2005/11/27 01:10:30 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-/*
- * Driver-specific IOCTL interfaces.  These are for use by the diagnostic
- * utility and should not be used in normal circumstances.   They are not
- * a public API and may change from one release to the next.   You have
- * been warned.
- */
-#define	AFEIOC	('A' << 8)
-
-#define	AFEIOC_GETCSR	(AFEIOC|1)
-#define	AFEIOC_PUTCSR	(AFEIOC|2)
-#define	AFEIOC_GETMII	(AFEIOC|3)
-#define	AFEIOC_PUTMII	(AFEIOC|4)
-#define	AFEIOC_GETPCI	(AFEIOC|5)
-#define	AFEIOC_PUTPCI	(AFEIOC|6)
-#define	AFEIOC_GETSROM	(AFEIOC|7)
 
 /*
  * These are conveniently defined to have the same values
@@ -62,32 +46,6 @@ extern "C" {
 #define	NDIOC	('N' << 8)
 #define	NDIOC_GET	(NDIOC|0)
 #define	NDIOC_SET	(NDIOC|1)
-
-struct afe_ioc_csr {
-	unsigned	csr_offset;
-	unsigned	csr_value;
-};
-
-struct afe_ioc_miireg {
-	ushort		mii_register;
-	ushort		mii_value;
-};
-
-struct afe_ioc_srom {
-	ushort		srom_address;
-	ushort		srom_value;
-};
-
-struct afe_ioc_pcireg {
-	ushort		pci_offset;
-	ushort		pci_width;
-	union {
-	    uint8_t	pci_val8;
-	    uint16_t	pci_val16;
-	    uint32_t	pci_val32;
-	    uint64_t	pci_val64;
-	}		pci_val;
-};
 
 /*
  * Registers and values are here, becuase they can be exported to userland
@@ -229,7 +187,7 @@ struct afe_ioc_pcireg {
 				AFE_INT_RXNOBUF | AFE_INT_RXIDLE | \
 				AFE_INT_RXOK | AFE_INT_TXUNDERFLOW | \
 				AFE_INT_LINKCHG | AFE_INT_TXJABBER | \
-				AFE_INT_TIMER)
+				AFE_INT_TXOK | AFE_INT_TIMER)
 
 /*
  * Bits for network access register.

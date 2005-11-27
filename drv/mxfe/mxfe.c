@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.5 2005/11/05 02:09:44 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.6 2005/11/27 01:10:30 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -109,10 +109,6 @@ static int	mxfe_startmac(mxfe_t *);
 static int	mxfe_stopmac(mxfe_t *);
 static int	mxfe_mcadd(mxfe_t *, unsigned char *);
 static int	mxfe_mcdelete(mxfe_t *, unsigned char *);
-static void	mxfe_iocgetcsr(mxfe_t *, queue_t *, mblk_t *);
-static void	mxfe_iocputcsr(mxfe_t *, queue_t *, mblk_t *);
-static void	mxfe_iocgetpci(mxfe_t *, queue_t *, mblk_t *);
-static void	mxfe_iocputpci(mxfe_t *, queue_t *, mblk_t *);
 static void	mxfe_setrxfilt(mxfe_t *);
 static void	mxfe_txreorder(mxfe_t *);
 static int	mxfe_allocrings(mxfe_t *);
@@ -307,7 +303,7 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.5 $";
+	char	*rev = "$Revision: 1.6 $";
 	char	*ident = mxfe_ident;
 
         /* this technique works for both RCS and SCCS */
@@ -730,22 +726,6 @@ mxfe_ioctl(gld_mac_info_t *macinfo, queue_t *wq, mblk_t *mp)
 
 	switch (IOC_CMD(mp)) {
 
-	case MXFEIOC_GETCSR:	/* register access (diagnostic) */
-		mxfe_iocgetcsr(mxfep, wq, mp);
-		break;
-
-	case MXFEIOC_PUTCSR:	/* register access (diagnostic) */
-		mxfe_iocputcsr(mxfep, wq, mp);
-		break;
-
-	case MXFEIOC_GETPCI:
-		mxfe_iocgetpci(mxfep, wq, mp);
-		break;
-
-	case MXFEIOC_PUTPCI:
-		mxfe_iocputpci(mxfep, wq, mp);
-		break;
-
 	case NDIOC_GET:
 		mxfe_ndget(mxfep, wq, mp);
 		break;
@@ -759,171 +739,6 @@ mxfe_ioctl(gld_mac_info_t *macinfo, queue_t *wq, mblk_t *mp)
 		break;
 	}
 	return (GLD_SUCCESS);
-}
-
-static void
-mxfe_iocgetcsr(mxfe_t *mxfep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct mxfe_ioc_csr	*csrp;
-
-	if ((iocp->ioc_count != sizeof (struct mxfe_ioc_csr)) ||
-	    (mp->b_cont == NULL)) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	csrp = (struct mxfe_ioc_csr *)mp->b_cont->b_rptr;
-	if ((csrp->csr_offset + 4) > mxfep->mxfe_regsize) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EFAULT);
-		return;
-	}
-
-	csrp->csr_value = GETCSR(mxfep, csrp->csr_offset);
-	mxfe_miocack(wq, mp, M_IOCACK, sizeof (struct mxfe_ioc_csr), 0);
-}
-
-static void
-mxfe_iocputcsr(mxfe_t *mxfep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct mxfe_ioc_csr	*csrp;
-
-	if ((iocp->ioc_count != sizeof (struct mxfe_ioc_csr)) ||
-	    (mp->b_cont == NULL)) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	csrp = (struct mxfe_ioc_csr *)mp->b_cont->b_rptr;
-	if ((csrp->csr_offset + 4) > mxfep->mxfe_regsize) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EFAULT);
-		return;
-	}
-	PUTCSR(mxfep, csrp->csr_offset, csrp->csr_value);
-	mxfe_miocack(wq, mp, M_IOCACK, sizeof (struct mxfe_ioc_csr), 0);
-}
-
-static void
-mxfe_iocgetpci(mxfe_t *mxfep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct mxfe_ioc_pcireg	*pcip;
-	ddi_acc_handle_t	acch;
-	int			rv = 0;
-
-	if ((iocp->ioc_count != sizeof (struct mxfe_ioc_pcireg)) ||
-	    (mp->b_cont == NULL)) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	if (pci_config_setup(mxfep->mxfe_dip, &acch) != DDI_SUCCESS) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EIO);
-		return;
-	}
-	pcip = (struct mxfe_ioc_pcireg *)mp->b_cont->b_rptr;
-	switch (pcip->pci_width) {
-	case 8:
-		pcip->pci_val.pci_val8 =
-		    pci_config_get8(acch, pcip->pci_offset);
-		break;
-	case 16:
-		if (pcip->pci_offset & 0x1) {
-			rv = EFAULT;
-		} else {
-			pcip->pci_val.pci_val16 =
-			    pci_config_get16(acch, pcip->pci_offset);
-		}
-		break;
-	case 32:
-		if (pcip->pci_offset & 0x3) {
-			rv = EFAULT;
-		} else {
-			pcip->pci_val.pci_val32 =
-			    pci_config_get32(acch, pcip->pci_offset);
-		}
-		break;
-	case 64:
-		if (pcip->pci_offset & 0x7) {
-			rv = EFAULT;
-		} else {
-			pcip->pci_val.pci_val64 =
-			    pci_config_get64(acch, pcip->pci_offset);
-		}
-		break;
-	default:
-		rv = EFAULT;
-		break;
-	}
-	pci_config_teardown(&acch);
-	if (rv) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, rv);
-	} else {
-		mxfe_miocack(wq, mp, M_IOCACK,
-		    sizeof (struct mxfe_ioc_pcireg), 0);
-	}
-}
-
-static void
-mxfe_iocputpci(mxfe_t *mxfep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct mxfe_ioc_pcireg	*pcip;
-	ddi_acc_handle_t	acch;
-	int			rv  = 0;
-
-	if ((iocp->ioc_count != sizeof (struct mxfe_ioc_pcireg)) ||
-	    (mp->b_cont == NULL)) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	if (pci_config_setup(mxfep->mxfe_dip, &acch) != DDI_SUCCESS) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, EIO);
-		return;
-	}
-	pcip = (struct mxfe_ioc_pcireg *)mp->b_cont->b_rptr;
-	switch (pcip->pci_width) {
-	case 8:
-		pci_config_put8(acch, pcip->pci_offset,
-		    pcip->pci_val.pci_val8);
-		break;
-	case 16:
-		if (pcip->pci_offset & 0x1) {
-			rv = EFAULT;
-		} else {
-			pci_config_put16(acch, pcip->pci_offset,
-			    pcip->pci_val.pci_val16);
-		}
-		break;
-	case 32:
-		if (pcip->pci_offset & 0x3) {
-			rv = EFAULT;
-		} else {
-			pci_config_put32(acch, pcip->pci_offset,
-			    pcip->pci_val.pci_val32);
-		}
-		break;
-	case 64:
-		if (pcip->pci_offset & 0x7) {
-			rv = EFAULT;
-		} else {
-			pci_config_put64(acch, pcip->pci_offset,
-			    pcip->pci_val.pci_val64);
-		}
-		break;
-	default:
-		rv = EFAULT;
-		break;
-	}
-	pci_config_teardown(&acch);
-	if (rv) {
-		mxfe_miocack(wq, mp, M_IOCNAK, 0, rv);
-	} else {
-		mxfe_miocack(wq, mp, M_IOCACK,
-		    sizeof (struct mxfe_ioc_pcireg), 0);
-	}
 }
 
 static int
@@ -3558,6 +3373,21 @@ mxfe_ndgetlinkmode(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
 }
 
 static int
+mxfe_ndgetsrom(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
+{
+	unsigned	val;
+	int		i;
+	char		buf[80];
+
+	for (i = 0; i < (1 << mxfep->mxfe_sromwidth); i++) {
+		val = mxfe_readsromword(mxfep, i);
+		sprintf(buf, "%s%04x", i % 8 ? " " : "", val);
+		mxfe_ndaddstr(mp, buf, ((i % 8) == 7) ? 1 : 0);
+	}
+	return (0);
+}
+
+static int
 mxfe_ndgetstring(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
 {
 	char	*s = (char *)ndp->nd_arg1;
@@ -3665,6 +3495,7 @@ mxfe_ndinit(mxfe_t *mxfep)
 	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_10HDX);
 	mxfe_ndadd(mxfep, "lp_10hdx_cap", mxfe_ndgetbit, NULL,
 	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_10HDX);
+	mxfe_ndadd(mxfep, "srom", mxfe_ndgetsrom, NULL, 0, 0);
 }
 
 /*

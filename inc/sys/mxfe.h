@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the Macronix 98715
  *
- * Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,24 +32,12 @@
 #ifndef	_MXFE_H
 #define	_MXFE_H
 
-#ident	"@(#)$Id: mxfe.h,v 1.2 2004/08/28 06:09:46 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.h,v 1.3 2005/11/27 01:10:30 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-/*
- * Driver-specific IOCTL interfaces.  These are for use by the diagnostic
- * utility and should not be used in normal circumstances.   They are not
- * a public API and may change from one release to the next.   You have
- * been warned.
- */
-#define	MXFEIOC	('A' << 8)
-
-#define	MXFEIOC_GETCSR	(MXFEIOC|1)
-#define	MXFEIOC_PUTCSR	(MXFEIOC|2)
-#define	MXFEIOC_GETPCI	(MXFEIOC|5)
-#define	MXFEIOC_PUTPCI	(MXFEIOC|6)
 /*
  * These are conveniently defined to have the same values
  * as are used by the NDD utility, which is an undocumented
@@ -58,22 +46,6 @@ extern "C" {
 #define	NDIOC	('N' << 8)
 #define	NDIOC_GET	(NDIOC|0)
 #define	NDIOC_SET	(NDIOC|1)
-
-struct mxfe_ioc_csr {
-	unsigned	csr_offset;
-	unsigned	csr_value;
-};
-
-struct mxfe_ioc_pcireg {
-	ushort		pci_offset;
-	ushort		pci_width;
-	union {
-	    uint8_t	pci_val8;
-	    uint16_t	pci_val16;
-	    uint32_t	pci_val32;
-	    uint64_t	pci_val64;
-	}		pci_val;
-};
 
 /*
  * Registers and values are here, becuase they can be exported to userland
