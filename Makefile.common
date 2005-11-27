@@ -1,10 +1,10 @@
 #
-# $Id: Makefile.common,v 1.5 2005/11/05 02:56:31 gdamore Exp $
+# $Id: Makefile.common,v 1.6 2005/11/27 01:10:01 gdamore Exp $
 #
 # Makefile.common
 #
 
-VER		=	1.0.4
+VER		=	1.0.5rc1
 REV		:sh=	date '+%Y.%m.%d.%H.%M'
 LINT		=	lint
 LINTFLAGS	=	-erroff=E_BAD_PTR_CAST_ALIGN
@@ -36,19 +36,22 @@ GCC		=	$(HASH)
 #
 CC		=	gcc
 COPTFLAG	=	-O2
-sparc_CFLAGS	=	-Wall -m32 -mtune=ultrasparc
-sparcv9_CFLAGS	=	-Wall -m64 -mtune=ultrasparc -D_SYSCALL32
-i386_CFLAGS	=	-Wall -m32 -march=i686
-amd64_CFLAGS	=	-Wall -m64 -march=opteron -D_SYSCALL32
+sparc_CFLAGS	=	-Wall -m32
+sparcv9_CFLAGS	=	-Wall -m64 -D_SYSCALL32
+i386_CFLAGS	=	-Wall -m32
+amd64_CFLAGS	=	-Wall -m64 -D_SYSCALL32
+STANDFLAG	=	-ffreestanding
 #
 # These are for Sun C (aka Forte aka SunONE)
 #
 $(GCC)CC		=	cc
 $(GCC)COPTFLAG		=	-xO2
-$(GCC)sparc_CFLAGS	=	-v -xarch=v8
-$(GCC)sparcv9_CFLAGS	=	-v -xarch=v9 -D_SYSCALL32
-$(GCC)i386_CFLAGS	=	-v -xarch=pentium_pro
-$(GCC)amd64_CFLAGS	=	-v -xarch=amd64
+$(GCC)sparc_CFLAGS	=	-v -xarch=generic
+$(GCC)sparcv9_CFLAGS	=	-v -xarch=generic64 -D_SYSCALL32
+$(GCC)i386_CFLAGS	=	-v -xarch=generic
+$(GCC)amd64_CFLAGS	=	-v -xarch=generic64 -D_SYSCALL32
+$(GCC)amd64_STANDFLAG	=	-xmodel=kernel
+$(GCC)STANDFLAG		=	$($(ISA)_STANDFLAG)
 #
 # Debugging, same for both compilers
 #

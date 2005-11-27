@@ -1,7 +1,7 @@
 /*
  * Diagnostic utility for ethernet cards using Garrett's drivers.
  *
- * Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: etherdiag.c,v 1.2 2004/08/27 22:58:49 gdamore Exp $"
+#ident	"@(#)$Id: etherdiag.c,v 1.3 2005/11/27 01:10:05 gdamore Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,13 +39,11 @@
 #include <sys/types.h>
 #include <sys/dlpi.h>
 #include <stropts.h>
-#include <ctype.h>
 #include <libdevinfo.h>
 #include <kstat.h>
 #include <sys/afe.h>
 
 /* use functional form to keep gcc -Wall silent */
-#undef	isdigit
 
 #define	min(x,y) ((y) > (x) ? (x) : (y))
 
@@ -69,158 +67,6 @@ openattach(char *dev)
 	}
 
 	return (fd);
-}
-
-static int
-getcsr(int fd, unsigned offset, unsigned *value)
-{
-	struct afe_ioc_csr	csr;
-	struct strioctl		str;
-
-	csr.csr_offset = offset;
-	csr.csr_value = 0;
-	str.ic_cmd = AFEIOC_GETCSR;
-	str.ic_timout = -1;
-	str.ic_dp = (char *)&csr;
-	str.ic_len = sizeof (csr);
-
-	if (ioctl(fd, I_STR, &str) < 0) {
-		perror("ioctl");
-		return (-1);
-	}
-
-	*value = csr.csr_value;
-	return (0);
-}
-
-static int
-putcsr(int fd, unsigned offset, unsigned value)
-{
-	struct afe_ioc_csr	csr;
-	struct strioctl		str;
-
-	csr.csr_offset = offset;
-	csr.csr_value = value;
-	str.ic_cmd = AFEIOC_PUTCSR;
-	str.ic_timout = -1;
-	str.ic_dp = (char *)&csr;
-	str.ic_len = sizeof (csr);
-
-	if (ioctl(fd, I_STR, &str) < 0) {
-		perror("ioctl");
-		return (-1);
-	}
-
-	return (0);
-}
-
-static ushort
-getmii(int fd, ushort reg)
-{
-	struct afe_ioc_miireg	mii;
-	struct strioctl		str;
-
-	mii.mii_register = reg;
-	mii.mii_value = 0;
-	str.ic_cmd = AFEIOC_GETMII;
-	str.ic_timout = -1;
-	str.ic_dp = (char *)&mii;
-	str.ic_len = sizeof (mii);
-
-	if (ioctl(fd, I_STR, &str) < 0) {
-		perror("ioctl");
-		return (0xffff);
-	}
-
-	return (mii.mii_value);
-}
-
-static int
-putmii(int fd, ushort reg, ushort val)
-{
-	struct afe_ioc_miireg	mii;
-	struct strioctl		str;
-
-	mii.mii_register = reg;
-	mii.mii_value = val;
-	str.ic_cmd = AFEIOC_GETMII;
-	str.ic_timout = -1;
-	str.ic_dp = (char *)&mii;
-	str.ic_len = sizeof (mii);
-
-	if (ioctl(fd, I_STR, &str) < 0) {
-		perror("ioctl");
-		return (-1);
-	}
-
-	return (mii.mii_value);
-}
-
-static int
-geteeprom(int fd, ushort address, ushort *value)
-{
-	struct afe_ioc_srom	srom;
-	struct strioctl		str;
-
-	srom.srom_address = address;
-	srom.srom_value = 0;
-	str.ic_cmd = AFEIOC_GETSROM;
-	str.ic_timout = -1;
-	str.ic_dp = (char *)&srom;
-	str.ic_len = sizeof (srom);
-
-	if (ioctl(fd, I_STR, &str) < 0) {
-		perror("ioctl");
-		return (-1);
-	}
-
-	*value = srom.srom_value;
-	return (0);
-}
-
-static int
-getpci(int fd, ushort offset, ushort width, void *resultp)
-{
-	struct afe_ioc_pcireg	pci;
-	struct strioctl		str;
-
-	pci.pci_offset = offset;
-	switch (width) {
-	case 8:
-	case 16:
-	case 32:
-		pci.pci_width = width;
-		break;
-	default:
-		(void) fprintf(stderr, "bad width specified, assuming 8 bits");
-		pci.pci_width = 8;
-		return (-1);
-	}
-	str.ic_cmd = AFEIOC_GETPCI;
-	str.ic_timout = -1;
-	str.ic_dp = (char *)&pci;
-	str.ic_len = sizeof (pci);
-
-	if (ioctl(fd, I_STR, &str) < 0) {
-		perror("ioctl");
-		return (-1);
-	}
-
-	switch (pci.pci_width) {
-	case 8:
-		*(uint8_t *)(resultp) = pci.pci_val.pci_val8;
-		break;
-	case 16:
-		*(uint16_t *)(resultp) = pci.pci_val.pci_val16;
-		break;
-	case 32:
-		*(uint32_t *)(resultp) = pci.pci_val.pci_val32;
-		break;
-	case 64:
-		*(uint64_t *)(resultp) = pci.pci_val.pci_val64;
-		break;
-	}
-	return (0);
 }
 
 static int
@@ -344,34 +190,7 @@ usage(void)
 	    "usage: etherdiag [-d <interface>] [-v] [-v]\n");
 	(void) fprintf(stderr,
 	    "       etherdiag -d <interface> -n <parameters>\n");
-	(void) fprintf(stderr,
-	    "       etherdiag -d <interface> -E\n");
-#ifdef	DEBUG
-	(void) fprintf(stderr,
-	    "       etherdiag -d <interface> -c <csr> [-w <value>]\n");
-	(void) fprintf(stderr,
-	    "       etherdiag -d <interface> -o <csr-offset> [-w <value>]\n");
-	(void) fprintf(stderr,
-	    "       etherdiag -d <interface> -m <mii-reg> [-w <value>]\n");
-	(void) fprintf(stderr,
-	    "       etherdiag -d <interface> -p <pci-config-offset> "
-	    "-z 8|16|32|64\n");
-#endif
 	exit(1);
-}
-
-static void
-do_getcsr(int fd, unsigned offset)
-{
-	unsigned val;
-	if (getcsr(fd, offset, &val) == 0) {
-		if (offset & 0x7) {
-			(void) printf("CSR ? @ 0x%02x: 0x%x\n", offset, val);
-		} else {
-			(void) printf("CSR %d @ 0x%02x: 0x%x\n", 
-			   offset >> 3, offset, val);
-		}
-	}
 }
 
 /*
@@ -406,10 +225,10 @@ ndd_set(int fd, char *name, char *val)
 	str.ic_len = sizeof (buf);
 
 	end = buf;
-	sprintf(end, "%s", name);
+	(void) sprintf(end, "%s", name);
 	end += strlen(end) + 1;
 
-	sprintf(end, "%s", val);
+	(void) sprintf(end, "%s", val);
 	end += strlen(end) + 1;
 
 	*end = 0;
@@ -435,7 +254,7 @@ ndd_get(int fd, char *name, intptr_t verbose)
 	str.ic_dp = buf;
 	str.ic_len = sizeof (buf);
 
-	sprintf(buf, "%s", name);
+	(void) sprintf(buf, "%s", name);
 	buf[strlen(buf) + 1]  = 0;
 	if (ioctl(fd, I_STR, &str) < 0) {
 		perror("ioctl");
@@ -448,18 +267,19 @@ ndd_get(int fd, char *name, intptr_t verbose)
 		char *line = out;
 		out += strlen(out) + 1;
 		if (line != buf) {
-			printf("\n");
+			(void) printf("\n");
 		}
 		if (strlen(line) == 0) {
 			continue;
 		}
 		if (strcmp(name, "?") != 0) {
-			printf("%s%s", verbose ? "    " : "", line);
+			(void) printf("%s%s", verbose ? "    " : "", line);
 		} else {
 			char 	*p, *m, *e;
 			p = strtok_r(line, " \t", &e);
 			m = strtok_r(NULL, "\n", &e);
-			printf("%s%-30s%s", verbose ? "    " : "", p, m);
+			(void) printf("%s%-30s%s",
+			    verbose ? "    " : "", p, m);
 		}
 	}
 }
@@ -478,10 +298,10 @@ do_ndd(int fd, char *options, intptr_t verbose)
 			}
 		} 
 		if (options == NULL) {
-			printf("\n");
+			(void) printf("\n");
 		}
 		if (verbose) {
-			printf("%s:\n", n);
+			(void) printf("%s:\n", n);
 		}
 		ndd_get(fd, n, verbose);
 
@@ -490,113 +310,24 @@ do_ndd(int fd, char *options, intptr_t verbose)
 	}
 }
 
-static void
-do_dumpeeprom(int fd)
-{
-	int	i;
-	ushort	buf[2048];
-	ushort	swapped[2048];
-
-	(void) memset(buf, 0, sizeof (buf));
-	for (i = 0; i < 2048; i++) {
-		/*LINTED E_PTR_CAST_ALIGN*/
-		(void) geteeprom(fd, i, buf + i);
-	}
-
-	swab((caddr_t)buf, (caddr_t)swapped, sizeof (buf));
-
-	for (i = 0; i < 2048; i += 8) {
-		/*LINTED E_PTR_CAST_ALIGN*/
-		unsigned short	*u = (swapped + i);
-		(void) printf("%04x: "
-		    "%04x %04x %04x %04x %04x %04x %04x %04x\n",
-		    i * 2, u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7]);
-	}
-}
-
-static void
-do_getmii(int fd, ushort reg)
-{
-	(void) printf("MII %d: 0x%x\n", reg, getmii(fd, reg));
-}
-
-static void
-do_putcsr(int fd, unsigned offset, unsigned val)
-{
-	if (putcsr(fd, offset, val) == 0) {
-		if (offset & 0x7) {
-			(void) printf("CSR ? @ 0x%02x: 0x%x (write)\n",
-			    offset, val);
-		} else {
-			(void) printf("CSR %d @ 0x%02x: 0x%x (write)\n",
-			    offset >> 3, offset, val);
-		}
-	}
-}
-
-static void
-do_putmii(int fd, ushort reg, ushort val)
-{
-	if (putmii(fd, reg, val)) {
-		(void) printf("MII %d: 0x%x (write)\n", reg, val);
-	}
-}
-
-static void
-do_getpci(int fd, ushort offset, ushort width)
-{
-	uint8_t val8;
-	uint16_t val16;
-	uint32_t val32;
-	uint64_t val64;
-
-	switch (width) {
-	case 8:
-		if (getpci(fd, offset, width, &val8) == 0) {
-			(void) printf("PCI @ 0x%02x: 0x%x (8 bits)\n",
-			    offset, val8);
-		}
-		break;
-	case 16:
-		if (getpci(fd, offset, width, &val16) == 0) {
-			(void) printf("PCI @ 0x%02x: 0x%x (16 bits)\n",
-			    offset, val16);
-		}
-		break;
-	case 32:
-		if (getpci(fd, offset, width, &val32) == 0) {
-			(void) printf("PCI @ 0x%02x: 0x%x (32 bits)\n",
-			    offset, val32);
-		}
-		break;
-	case 64:
-		if (getpci(fd, offset, width, &val64) == 0) {
-			(void) printf("PCI @ 0x%02x: 0x%llx (32 bits)\n",
-			    offset, (long long)val64);
-		}
-		break;
-	}
-}
-
 static int
-getslot(di_node_t node)
+getpromprop(di_node_t node, const char *name)
 {
 	di_prom_handle_t	ph;
-	int			*slots = NULL;
-	int			slot = -1;
-	int			nslots;
-
+	int			*vals = NULL;
+	int			val = -1;
+	int			nval;
 	ph = di_prom_init();
 	if (ph == DI_PROM_HANDLE_NIL) {
 		perror("prom_init");
 		return (-1);
 	}
-	nslots = di_prom_prop_lookup_ints(ph, node, "slot", &slots);
-	if (nslots > 0) {
-		slot = slots[0];
+	nval = di_prom_prop_lookup_ints(ph, node, name, &vals);
+	if (nval > 0) {
+		val = vals[0];
 	}
 	di_prom_fini(ph);
-	return (slot);
+	return (val);
 }
 
 static int 
@@ -608,7 +339,7 @@ showinterface(di_node_t node, void *arg)
 	char		*name;
 	char		*path;
 	char		iface[32];
-	uint16_t	vid, did, svid, sdid;
+	int		vid, did, svid, sdid;
 	uint8_t		rid;
 	int		slot;
 	char		*model = NULL;
@@ -629,16 +360,14 @@ showinterface(di_node_t node, void *arg)
 	}
 	(void) sprintf(iface, "%s%d", name, instance);
 
-	if ((getpci(fd, AFE_PCI_VID, 16, &vid) != 0) ||
-	    (getpci(fd, AFE_PCI_DID, 16, &did) != 0) ||
-	    (getpci(fd, AFE_PCI_RID, 8, &rid) != 0) ||
-	    (getpci(fd, AFE_PCI_SVID, 16, &svid) != 0) ||
-	    (getpci(fd, AFE_PCI_SSID, 16, &sdid) != 0)) {
-		(void) close(fd);
-		return (-1);
-	}
 
-	slot = getslot(node);
+	/* we look at prom properties to get PCI config info */
+	vid = getpromprop(node, "vendor-id");
+	did = getpromprop(node, "device-id");
+	svid = getpromprop(node, "subsystem-vendor-id");
+	sdid = getpromprop(node, "subsystem-id");
+	rid = getpromprop(node, "revision-id");
+	slot = getpromprop(node, "slot");
 
 	len = 6;
 	if (dlpi_get_phys_addr(fd, DL_FACT_PHYS_ADDR, fact_addr, &len) < 0) {
@@ -668,6 +397,7 @@ showinterface(di_node_t node, void *arg)
 	printaddr(curr_addr, 6);
 
 	if (verbose) {
+		
 		(void) printf("Factory Ethernet Address: ");
 		printaddr(fact_addr, 6);
 		(void) printf("Devices Path: %s\n", path);
@@ -692,7 +422,8 @@ showinterface(di_node_t node, void *arg)
 }
 
 static int
-forallinterfaces(const char *driver, int (*func)(di_node_t, void *), void *arg)
+forallinterfaces(const char *driver, int (*func)(di_node_t, void *),
+    void *arg)
 {
 	di_node_t	node;
 	int		temprv, rv = 0;
@@ -724,23 +455,28 @@ displaydev(char *dev, intptr_t verbose)
 	char		devbuf[256];
 	di_node_t	node;
 	int		idx;
-	int		ppa;
+	int		ppa = 0;
+	int		mult = 1;
+	char		c;
 
-	(void) strcpy(devbuf, dev);
+	(void) snprintf(devbuf, sizeof (devbuf), "%s", dev);
 	idx = strlen(devbuf) - 1;
-	while ((idx > 0) && isdigit(devbuf[idx])) {
+	while ((idx > 0) && (c = devbuf[idx]) && (c >= '0') && (c <= '9')) {
+		c -= '0';
+		ppa += mult * c;
+		mult *= 10;
+		devbuf[idx] = 0;
 		idx--;
 	}
-	idx++;
-	ppa = atoi(&devbuf[idx]);
-	devbuf[idx] = 0;
 
 	node = di_drv_first_node(devbuf, di_init("/", DINFOCPYALL));
-	while (node != NULL) {
+
+	while (node != DI_NODE_NIL) {
 		if (di_instance(node) == ppa) {
 			(void) showinterface(node, (void *)verbose);
 			break;
 		}
+		node = di_drv_next_node(node);
 	}
 }
 
@@ -750,37 +486,12 @@ main(int argc, char **argv)
 	int		opt;
 	int		fd;
 	char		*dev = NULL;
-	int		opto = 0;
-	int		optc = 0;
-	int		optw = 0;
-	int		optp = 0;
-	int		optm = 0;
 	char		*optn = NULL;
-	int		optz = 0;
 	intptr_t	optv = 0;
-	int		optE = 0;
-	unsigned	csr = 0;
-	unsigned	val = 0;
-	unsigned	width = 0;
-	unsigned	pciaddr = 0;
-	ushort		mii = 0;
-
-#ifdef	DEBUG
-#define	DEBUGOPTIONS	"o:c:m:w:p:z:"
-#else
-#define	DEBUGOPTIONS
-#endif
 
 	/* we parse argv twice, first we look for the PPA */
-	while ((opt = getopt(argc, argv, "d:vEn:" DEBUGOPTIONS)) != -1) {
+	while ((opt = getopt(argc, argv, "d:vEn:")) != -1) {
 		switch (opt) {
-		case 'E':
-			if (optn || optc || opto || optp || optz || optw ||
-			    optp || optm) {
-				usage();
-			}
-			optE++;
-			break;
 		case 'd':
 			dev = optarg;
 			break;
@@ -788,96 +499,32 @@ main(int argc, char **argv)
 			optv++;
 			break;
 		case 'n':
-			if (optE) {
-				usage();
-			}
 			optn = optarg;
-			break;
-		case 'c':
-			if (optc || optm || opto || optp || optE || optz) {
-				usage();
-			}
-			csr = strtoul(optarg, NULL, 0);
-			csr *= 8;
-			optc++;
-			break;
-		case 'o':
-			if (optc || optm || opto || optp || optE || optz) {
-				usage();
-			}
-			csr = strtoul(optarg, NULL, 0);
-			opto++;
-			break;
-		case 'p':
-			if (optc || optm || opto || optp || optw || optE) {
-				usage();
-			}
-			pciaddr = strtoul(optarg, NULL, 0);
-			optp++;
-			break;
-		case 'z':
-			if (optz || optc || optm || opto || optw || optE) {
-				usage();
-			}
-			width = strtoul(optarg, NULL, 0);
-			optz++;
-			break;
-		case 'w':
-			if (optw || optz || optE) {
-				usage();
-			}	
-			val = strtoul(optarg, NULL, 0);
-			optw++;
-			break;
-		case 'm':
-			if (optc || optm || opto || optp || optz || optE) {
-				usage();
-			}
-			mii = strtoul(optarg, NULL, 0);
-			optm++;
 			break;
 		default:
 			usage();
-			exit(1);
 		}
 	}
 
-	if ((!dev) && (!optm) && (!optc) && (!opto) && (!optp) && (!optE)) {
+	if ((!dev) && (!optn)) {
 
 		/* iterate over all interfaces */
 		(void) forallinterfaces("afe", showinterface, (void *)optv);
 		(void) forallinterfaces("mxfe", showinterface, (void *)optv);
 		return (0);
 	}
+
+	/* must have device named at this point */
+	if (!dev) {
+		usage();
+	}
+
 	if ((fd = openattach(dev)) < 0) {
 		exit(-1);
 	}
 
 	if (optn) {
 		do_ndd(fd, optn, optv);
-	} else if (optc || opto) {
-		if (optw) {
-			do_putcsr(fd, csr, val);
-		} else {
-			do_getcsr(fd, csr);
-		}
-
-	} else if (optE) {
-		do_dumpeeprom(fd);
-
-	} else if (optm) {
-		if (optw) {
-			do_putmii(fd, mii, val);
-		} else {
-			do_getmii(fd, mii);
-		}
-
-	} else  if (optp) {
-		if (optz) {
-			do_getpci(fd, pciaddr, width);
-		} else {
-			usage();
-		}
 
 	} else {
 		displaydev(dev, optv);

@@ -1,5 +1,5 @@
 #
-# $Id: Makefile.common,v 1.2 2004/08/27 23:03:38 gdamore Exp $
+# $Id: Makefile.common,v 1.3 2005/11/27 01:10:05 gdamore Exp $
 #
 # drv/Makefile.common
 #
@@ -13,7 +13,7 @@ DDICTFLAGS	=	$(CPPFLAGS)
 CPPFLAGS	+=	-I $(TOP)/inc
 DEFS		=	-D_KERNEL $(DEBUG)
 CPPFLAGS	+=	$(DEFS)
-CFLAGS		+=	$($(ISA)_CFLAGS) $(COPTFLAG)
+CFLAGS		+=	$($(ISA)_CFLAGS) $(COPTFLAG) $(STANDFLAG)
 MOD		=	$(TOP)/obj.$(ISA)/$(MODNAME)
 OBJS		=	$(SRCS:%.c=$(TOP)/obj.$(ISA)/%.o)
 LINTS		=	$(OBJS:%.o=%.ln)

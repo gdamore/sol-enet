@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.4 2005/11/05 02:09:44 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.5 2005/11/27 01:10:05 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -75,6 +75,7 @@ static afe_card_t afe_cards[] = {
 	/*
 	 * Models listed here.
 	 */
+	{ 0x10b7, 0x9300, "3Com 3CSOHO100B-TX", AFE_MODEL_CENTAUR },
 	{ 0x10b8, 0x1255, "SMC1255TX", AFE_MODEL_CENTAUR },
 	{ 0x111a, 0x1020, "Siemens SpeedStream PCI 10/100",
 	  AFE_MODEL_CENTAUR },
@@ -83,6 +84,9 @@ static afe_card_t afe_cards[] = {
 	{ 0x1113, 0x2220, "Accton EN2220", AFE_MODEL_CENTAUR },
 	{ 0x1113, 0x9216, "3M VOL-N100VF+TX", AFE_MODEL_CENTAUR },
 	{ 0x1317, 0x0574, "Linksys LNE100TX", AFE_MODEL_CENTAUR },
+	{ 0x1317, 0x0570, "Network Everywhere NC100", AFE_MODEL_CENTAUR },
+	{ 0x13d1, 0xab02, "Abocom FE2500", AFE_MODEL_CENTAUR },
+	{ 0x13d1, 0xab08, "Abocom FE2500MX", AFE_MODEL_CENTAUR },
 	{ 0x16ec, 0x00ed, "U.S. Robotics 10/100 PCI NIC TX",
 	  AFE_MODEL_CENTAUR },
 	{ 0x1737, 0xab08, "Linksys PCMPC200", AFE_MODEL_CENTAUR },
@@ -108,13 +112,6 @@ static int	afe_startmac(afe_t *);
 static int	afe_stopmac(afe_t *);
 static int	afe_mcadd(afe_t *, unsigned char *);
 static int	afe_mcdelete(afe_t *, unsigned char *);
-static void	afe_iocgetcsr(afe_t *, queue_t *, mblk_t *);
-static void	afe_iocputcsr(afe_t *, queue_t *, mblk_t *);
-static void	afe_iocgetmii(afe_t *, queue_t *, mblk_t *);
-static void	afe_iocputmii(afe_t *, queue_t *, mblk_t *);
-static void	afe_iocgetsrom(afe_t *, queue_t *, mblk_t *);
-static void	afe_iocgetpci(afe_t *, queue_t *, mblk_t *);
-static void	afe_iocputpci(afe_t *, queue_t *, mblk_t *);
 static int	afe_allocrings(afe_t *);
 static void	afe_freerings(afe_t *);
 static afe_buf_t	*afe_getbuf(afe_t *, int);
@@ -304,7 +301,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.4 $";
+	char	*rev = "$Revision: 1.5 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
@@ -729,34 +726,6 @@ afe_ioctl(gld_mac_info_t *macinfo, queue_t *wq, mblk_t *mp)
 	afe_t *afep = (afe_t *)macinfo->gldm_private;
 	switch (IOC_CMD(mp)) {
 
-	case AFEIOC_GETCSR:	/* register access (diagnostic) */
-		afe_iocgetcsr(afep, wq, mp);
-		break;
-
-	case AFEIOC_PUTCSR:	/* register access (diagnostic) */
-		afe_iocputcsr(afep, wq, mp);
-		break;
-
-	case AFEIOC_GETMII:
-		afe_iocgetmii(afep, wq, mp);
-		break;
-
-	case AFEIOC_PUTMII:
-		afe_iocputmii(afep, wq, mp);
-		break;
-
-	case AFEIOC_GETSROM:
-		afe_iocgetsrom(afep, wq, mp);
-		break;
-
-	case AFEIOC_GETPCI:
-		afe_iocgetpci(afep, wq, mp);
-		break;
-
-	case AFEIOC_PUTPCI:
-		afe_iocputpci(afep, wq, mp);
-		break;
-
 	case NDIOC_GET:
 		afe_ndget(afep, wq, mp);
 		break;
@@ -770,223 +739,6 @@ afe_ioctl(gld_mac_info_t *macinfo, queue_t *wq, mblk_t *mp)
 		break;
 	}
 	return (GLD_SUCCESS);
-}
-
-static void
-afe_iocgetcsr(afe_t *afep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct afe_ioc_csr	*csrp;
-
-	if ((iocp->ioc_count != sizeof (struct afe_ioc_csr)) ||
-	    (mp->b_cont == NULL)) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	csrp = (struct afe_ioc_csr *)mp->b_cont->b_rptr;
-	if ((csrp->csr_offset + 4) > afep->afe_regsize) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EFAULT);
-		return;
-	}
-
-	csrp->csr_value = GETCSR(afep, csrp->csr_offset);
-	afe_miocack(wq, mp, M_IOCACK, sizeof (struct afe_ioc_csr), 0);
-}
-
-static void
-afe_iocputcsr(afe_t *afep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct afe_ioc_csr	*csrp;
-
-	if ((iocp->ioc_count != sizeof (struct afe_ioc_csr)) ||
-	    (mp->b_cont == NULL)) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	csrp = (struct afe_ioc_csr *)mp->b_cont->b_rptr;
-	if ((csrp->csr_offset + 4) > afep->afe_regsize) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EFAULT);
-		return;
-	}
-	PUTCSR(afep, csrp->csr_offset, csrp->csr_value);
-	afe_miocack(wq, mp, M_IOCACK, sizeof (struct afe_ioc_csr), 0);
-}
-
-static void
-afe_iocgetmii(afe_t *afep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct afe_ioc_miireg	*miip;
-
-	if ((iocp->ioc_count != sizeof (struct afe_ioc_miireg)) ||
-	    (mp->b_cont == NULL)) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	miip = (struct afe_ioc_miireg *)mp->b_cont->b_rptr;
-	miip->mii_value = afe_miiread(afep, afep->afe_phyaddr,
-	    miip->mii_register);
-	afe_miocack(wq, mp, M_IOCACK, sizeof (struct afe_ioc_miireg), 0);
-}
-
-static void
-afe_iocputmii(afe_t *afep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct afe_ioc_miireg	*miip;
-
-	if ((iocp->ioc_count != sizeof (struct afe_ioc_miireg)) ||
-	    (mp->b_cont == NULL)) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	miip = (struct afe_ioc_miireg *)mp->b_cont->b_rptr;
-	afe_miiwrite(afep, afep->afe_phyaddr,
-	    miip->mii_register, miip->mii_value);
-	afe_miocack(wq, mp, M_IOCACK, sizeof (struct afe_ioc_miireg), 0);
-}
-
-static void
-afe_iocgetpci(afe_t *afep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct afe_ioc_pcireg	*pcip;
-	ddi_acc_handle_t	acch;
-	int			rv = 0;
-
-	if ((iocp->ioc_count != sizeof (struct afe_ioc_pcireg)) ||
-	    (mp->b_cont == NULL)) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	if (pci_config_setup(afep->afe_dip, &acch) != DDI_SUCCESS) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EIO);
-		return;
-	}
-	pcip = (struct afe_ioc_pcireg *)mp->b_cont->b_rptr;
-	switch (pcip->pci_width) {
-	case 8:
-		pcip->pci_val.pci_val8 =
-		    pci_config_get8(acch, pcip->pci_offset);
-		break;
-	case 16:
-		if (pcip->pci_offset & 0x1) {
-			rv = EFAULT;
-		} else {
-			pcip->pci_val.pci_val16 =
-			    pci_config_get16(acch, pcip->pci_offset);
-		}
-		break;
-	case 32:
-		if (pcip->pci_offset & 0x3) {
-			rv = EFAULT;
-		} else {
-			pcip->pci_val.pci_val32 =
-			    pci_config_get32(acch, pcip->pci_offset);
-		}
-		break;
-	case 64:
-		if (pcip->pci_offset & 0x7) {
-			rv = EFAULT;
-		} else {
-			pcip->pci_val.pci_val64 =
-			    pci_config_get64(acch, pcip->pci_offset);
-		}
-		break;
-	default:
-		rv = EFAULT;
-		break;
-	}
-	pci_config_teardown(&acch);
-	if (rv) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, rv);
-	} else {
-		afe_miocack(wq, mp, M_IOCACK, sizeof (struct afe_ioc_pcireg), 0);
-	}
-}
-
-static void
-afe_iocputpci(afe_t *afep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct afe_ioc_pcireg	*pcip;
-	ddi_acc_handle_t	acch;
-	int			rv  = 0;
-
-	if ((iocp->ioc_count != sizeof (struct afe_ioc_pcireg)) ||
-	    (mp->b_cont == NULL)) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	if (pci_config_setup(afep->afe_dip, &acch) != DDI_SUCCESS) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EIO);
-		return;
-	}
-	pcip = (struct afe_ioc_pcireg *)mp->b_cont->b_rptr;
-	switch (pcip->pci_width) {
-	case 8:
-		pci_config_put8(acch, pcip->pci_offset,
-		    pcip->pci_val.pci_val8);
-		break;
-	case 16:
-		if (pcip->pci_offset & 0x1) {
-			rv = EFAULT;
-		} else {
-			pci_config_put16(acch, pcip->pci_offset,
-			    pcip->pci_val.pci_val16);
-		}
-		break;
-	case 32:
-		if (pcip->pci_offset & 0x3) {
-			rv = EFAULT;
-		} else {
-			pci_config_put32(acch, pcip->pci_offset,
-			    pcip->pci_val.pci_val32);
-		}
-		break;
-	case 64:
-		if (pcip->pci_offset & 0x7) {
-			rv = EFAULT;
-		} else {
-			pci_config_put64(acch, pcip->pci_offset,
-			    pcip->pci_val.pci_val64);
-		}
-		break;
-	default:
-		rv = EFAULT;
-		break;
-	}
-	pci_config_teardown(&acch);
-	if (rv) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, rv);
-	} else {
-		afe_miocack(wq, mp, M_IOCACK, sizeof (struct afe_ioc_pcireg),
-		    0);
-	}
-}
-
-static void
-afe_iocgetsrom(afe_t *afep, queue_t *wq, mblk_t *mp)
-{
-	struct iocblk		*iocp = (struct iocblk *)mp->b_rptr;
-	struct afe_ioc_srom	*sromp;
-
-	if ((iocp->ioc_count != sizeof (struct afe_ioc_srom)) ||
-	    (mp->b_cont == NULL)) {
-		afe_miocack(wq, mp, M_IOCNAK, 0, EINVAL);
-		return;
-	}
-
-	sromp = (struct afe_ioc_srom *)mp->b_cont->b_rptr;
-	sromp->srom_value = afe_readsromword(afep, sromp->srom_address);
-	afe_miocack(wq, mp, M_IOCACK, sizeof (struct afe_ioc_srom), 0);
 }
 
 static void
@@ -2584,7 +2336,7 @@ afe_intr(gld_mac_info_t *macinfo)
 		DBG(AFE_DINTR, "link change interrupt!");
 	}
 
-	if (status & AFE_INT_TXNOBUF) {
+	if (status & (AFE_INT_TXOK|AFE_INT_TXJABBER|AFE_INT_TXUNDERFLOW)) {
 		/* transmit completed, reclaim bufs and wake up any waiter */
 		mutex_enter(&afep->afe_xmtlock);
 		afe_reclaim(afep);
@@ -2662,14 +2414,11 @@ afe_intr(gld_mac_info_t *macinfo)
 			break;
 		}
 	}
-	if (status & AFE_INT_TXUNDERFLOW) {
+	if (status & (AFE_INT_TXUNDERFLOW|AFE_INT_TXJABBER)) {
 		/* stats updated in afe_reclaim() */
 		reset = 1;
 	}
-	if (status & AFE_INT_TXJABBER) {
-		/* stats updated in afe_reclaim() */
-		reset = 1;
-	}
+
 	if (status & AFE_INT_RXJABBER) {
 		afep->afe_errrcv++;
 		reset = 1;
@@ -2740,7 +2489,6 @@ afe_send(gld_mac_info_t *macinfo, mblk_t *mp)
 
 	/* grab a transmit buffer */
 	if ((bufp = afe_getbuf(afep, 1)) == NULL) {
-		SETBIT(afep, AFE_CSR_IER2, AFE_INT_TXNOBUF);
 		DBG(AFE_DXMIT, "no buffer available");
 		return (GLD_NORESOURCES);
 	}
@@ -2780,27 +2528,10 @@ afe_send(gld_mac_info_t *macinfo, mblk_t *mp)
 
 	if (afep->afe_txavail == 0) {
 		/* no more tmds */
-		SETBIT(afep, AFE_CSR_IER2, AFE_INT_TXNOBUF);
 		mutex_exit(&afep->afe_xmtlock);
 		afe_freebuf(bufp);
 		DBG(AFE_DXMIT, "out of tmds");
 		return (GLD_NORESOURCES);
-	}
-
-	if ((afep->afe_txsend == 0) &&
-	    (afep->afe_txavail != AFE_TXRING)) {
-		/*
-		 * We've wrapped around the end of the ring.
-		 * The ADMtek chips have an errata that will result
-		 * in a stall on transmit if we proceed before the
-		 * existing fragments are sent, so wait for that to
-		 * happen before proceeding.
-		 */
-		SETBIT(afep, AFE_CSR_IER2, AFE_INT_TXNOBUF);
-                mutex_exit(&afep->afe_xmtlock);
-                afe_freebuf(bufp);
-                DBG(AFE_DXMIT, "avoiding ADMtek tx errata");
-                return (GLD_NORESOURCES);
 	}
 
 	freemsg(mp);
@@ -2847,22 +2578,11 @@ afe_reclaim(afe_t *afep)
 		unsigned	status;
 		afe_buf_t	*bufp;
 
-		if (afep->afe_txavail == AFE_TXRING) {
-			/*
-			 * We've emptied the ring, so we don't need to
-			 * know about it again until the ring fills up
-			 * next time.  (This logic is required because
-			 * we only want to have this interrupt enabled
-			 * when we run out of space in the ring; this
-			 * significantly reduces the number interrupts
-			 * required to transmit.)
-			 */
-			CLRBIT(afep, AFE_CSR_IER2, AFE_INT_TXNOBUF);
-			break;
-		}
-
 		tmdp = &afep->afe_txdescp[afep->afe_txreclaim];
 		bufp = afep->afe_txbufs[afep->afe_txreclaim];
+		if (bufp == NULL) {
+			break;
+		}
 
 		/* sync it before we read it */
 		SYNCDESC(afep, tmdp, DDI_DMA_SYNC_FORCPU);
@@ -3408,6 +3128,21 @@ afe_ndgetlinkmode(afe_t *afep, mblk_t *mp, afe_nd_t *ndp)
 }
 
 static int
+afe_ndgetsrom(afe_t *afep, mblk_t *mp, afe_nd_t *ndp)
+{
+	unsigned	val;
+	int		i;
+	char		buf[80];
+
+	for (i = 0; i < (1 << afep->afe_sromwidth); i++) {
+		val = afe_readsromword(afep, i);
+		sprintf(buf, "%s%04x", i % 8 ? " " : "", val);
+		afe_ndaddstr(mp, buf, ((i % 8) == 7) ? 1 : 0);
+	}
+	return (0);
+}
+
+static int
 afe_ndgetstring(afe_t *afep, mblk_t *mp, afe_nd_t *ndp)
 {
 	char	*s = (char *)ndp->nd_arg1;
@@ -3523,6 +3258,7 @@ afe_ndinit(afe_t *afep)
 	    MII_REG_ANLPAR, MII_ANEG_10FDX);
 	afe_ndadd(afep, "lp_10hdx_cap", afe_ndgetmiibit, NULL,
 	    MII_REG_ANLPAR, MII_ANEG_10HDX);
+	afe_ndadd(afep, "srom", afe_ndgetsrom, NULL, 0, 0);
 }
 
 /*

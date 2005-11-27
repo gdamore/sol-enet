@@ -1,4 +1,15 @@
-$Id: CHANGES,v 1.3 2005/11/05 02:09:44 gdamore Exp $
+$Id: CHANGES,v 1.4 2005/11/27 01:10:01 gdamore Exp $
+
+Changes in 1.0.5
+----------------
+	* cleaned up some compiler options
+	* rework transmit logic slightly, hopefully fix transmit side hang
+	  (this change reenables per-packet transmit complete interrupts, so
+	  expect more interrupt activity)
+	* added detection of a few new cards (NC100, 3Com SOHO, etc.)
+	* removed lots of debug code I never use (CSR, MII, and PCI etherdiag)
+	* srom dump (-E) removed from etherdiag, replaced with NDD "srom"
+	* various bugs in etherdiag fixed
 
 Changes in 1.0.4
 ----------------
