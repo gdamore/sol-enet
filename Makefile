@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.3 2005/11/05 02:09:44 gdamore Exp $
+# $Id: Makefile,v 1.4 2005/11/28 17:34:25 gdamore Exp $
 #
 # Makefile
 #
@@ -26,7 +26,7 @@ ARCHS		=	${${ARCHS_LIST}}
 SUBDIRS		=	inc drv cmd pkg man doc
 
 DISTSRCS	=	Makefile Makefile.common Makefile.targ \
-			README TODO COPYING CHANGES COMPILING
+			README TODO COPYING CHANGES COMPILING PERFORMANCE
 
 DISTLIST	=	$(MAKE) RELDIR=$(DISTNAME)-$(VER) distlist
 

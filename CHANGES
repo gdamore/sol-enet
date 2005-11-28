@@ -1,4 +1,4 @@
-$Id: CHANGES,v 1.5 2005/11/28 02:35:43 gdamore Exp $
+$Id: CHANGES,v 1.6 2005/11/28 17:34:25 gdamore Exp $
 
 Changes in 1.0.5
 ----------------
@@ -12,6 +12,7 @@ Changes in 1.0.5
 	* srom dump (-E) removed from etherdiag, replaced with NDD "srom"
 	* various bugs in etherdiag fixed
 	* remove debug noise in mxfe
+	* added PERFORMANCE notes
 
 Changes in 1.0.4
 ----------------

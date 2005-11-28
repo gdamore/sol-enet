@@ -1,0 +1,29 @@
+
+Test configuration:
+
+Local: Sun Ultra 20, 1.8GHz Opteron, Linksys NC100 (afe driver 1.0.5rc1), S10
+Remote: P4 2.8GHz, Realtek ethernet, NetBSD 3.0_BETA
+Switch: Linksys WRT54G v. 2
+
+garrett@zippy{43}> obj.i386/ttcp -s -n 204800 -v -t 10.0.0.3 
+ttcp-t: buflen=8192, nbuf=204800, align=16384/0, IPv4, port=5001  tcp  -> 10.0.0.3
+ttcp-t: socket
+ttcp-t: connect
+ttcp-t: 1677721600 bytes in 143.53 real seconds = 11414.83 KB/sec +++
+ttcp-t: 1677721600 bytes in 1.31 CPU seconds = 1255300.97 KB/cpu sec
+ttcp-t: 204800 I/O calls, msec/call = 0.72, calls/sec = 1426.85
+ttcp-t: 0.1user 1.2sys 2:23real 0% 0i+0d 0maxrss 0+0pf 34091+124csw
+ttcp-t: buffer address 0x806c000
+
+And here's the receive:
+
+garrett@zippy{44}> obj.i386/ttcp -s -r -v
+ttcp-r: buflen=8192, nbuf=2048, align=16384/0, IPv4, port=5001  tcp
+ttcp-r: socket
+ttcp-r: accept from 10.0.0.3
+ttcp-r: 1707212800 bytes in 149.47 real seconds = 11153.92 KB/sec +++
+ttcp-r: 1707212800 bytes in 2.15 CPU seconds = 777235.65 KB/cpu sec
+ttcp-r: 375071 I/O calls, msec/call = 0.41, calls/sec = 2509.30
+ttcp-r: 0.4user 1.6sys 2:29real 1% 0i+0d 0maxrss 0+0pf 366983+885csw
+ttcp-r: buffer address 0x8068000
+
