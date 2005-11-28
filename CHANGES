@@ -1,7 +1,8 @@
-$Id: CHANGES,v 1.4 2005/11/27 01:10:01 gdamore Exp $
+$Id: CHANGES,v 1.5 2005/11/28 02:35:43 gdamore Exp $
 
 Changes in 1.0.5
 ----------------
+	* switch to Studio 11 compilers
 	* cleaned up some compiler options
 	* rework transmit logic slightly, hopefully fix transmit side hang
 	  (this change reenables per-packet transmit complete interrupts, so
@@ -10,6 +11,7 @@ Changes in 1.0.5
 	* removed lots of debug code I never use (CSR, MII, and PCI etherdiag)
 	* srom dump (-E) removed from etherdiag, replaced with NDD "srom"
 	* various bugs in etherdiag fixed
+	* remove debug noise in mxfe
 
 Changes in 1.0.4
 ----------------
