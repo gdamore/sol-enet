@@ -19,23 +19,35 @@ PREREQUISITES
 INSTALL
 -------
 
-To install from source, you *MUST* use either gcc 3.2.1 or newer, or
-Sun Forte C 6 or newer.  In this release, gcc is presumed to be the default.
-Older compilers will *NOT* work.
+I've only tested this release using the Sun Studio 11 compilers.  It should
+be possible to use recent versions of gcc (3.3 or better) and possibly even
+older versions of the Sun compilers (depending upon which platform you are
+building for.)  In any case, the Sun Studio 11 compilers are freely available
+without any unreasonable limitation from Sun, so I recommend you use those, as
+this is the compiler that Sun uses to build Solaris itself.
 
-Steps (assuming the GNU C Compiler):
+If you have updated information about compiler options, etc., please let me
+know.  However, please don't bother me if you are just having trouble building
+the package from source -- especially if you are not using Sun Studio 11 or
+better -- instead JUST USE THE BINARY RELEASES.
 
-	1) ensure that "gcc" is on your path and is GCC 3.2.1 or newer.
+To build using the Sun Studio compilers:
 
-	2) ensure that "make" is on your path, and is /usr/ccs/bin/make.
+	1) Ensure that "cc" is on your path and is Studio 11 or newer.  It
+	   *must not* be /usr/ucb/cc.  (Take /usr/ucb out of your path
+	   for this build.  In fact, I recommend taking /usr/ucb out of
+	   your path forever.  If you still use some utilities there, create
+	   a specific alias.  /usr/ucb is "evil" in many regards.)
+
+	2) Ensure that "make" is on your path, and is /usr/ccs/bin/make.
 	   NOTE: YOU MUST USE SUN'S MAKE, GNUMAKE WILL NOT WORK!!!
 
-	3) in this directory, type "make package"
+	3) In this directory, type "make package".
 
-	4) this will create a directory called "pkgdir.i386" or "pkgdir.sparc",
+	4) This will create a directory called "pkgdir.i386" or "pkgdir.sparc",
 	   depending on which platform you are building on.
 
-	5) become root using the "su" program
+	5) Become root using the "su" program.
 
 	6) pkgadd -d pkgdir.`uname -p` all
 
@@ -47,22 +59,23 @@ Steps (assuming the GNU C Compiler):
 	   driver is plumbed properly underneath IP.  (If you are saavy with
 	   ifconfig(1M), you can skip this step, but you knew that, right?)
 
-To build using the Forte (aka SunONE) compilers:
+To build using GCC *UNSUPPORTED*:
 
-	1) ensure that "cc" is on your path and is Forte 6 or newer.  It
-	   *must not* be /usr/ucb/cc.  (Take /usr/ucb out of your path
-	   for this build.  In fact, I recommend taking /usr/ucb out of
-	   your path forever.  If you still use some utilities there, create
-	   a specific alias.  /usr/ucb is "evil" in many regards.)
+	1) Make sure you have a recent (e.g. 3.4.x) version of GCC
+	   with both 32 and 64 bit support compiled in.  Note that as
+	   of this writing the version supplied by blastwave on x86
+	   does *not* include 64-bit support.)  Also, make sure that gcc
+	   is on your path.
 
-	2) ensure that "make" is on your path, and is /usr/ccs/bin/make.
+	2) Ensure that "make" is on your path, and is /usr/ccs/bin/make.
 	   NOTE: YOU MUST USE SUN'S MAKE, GNUMAKE WILL NOT WORK!!!
 
-	3) in this directory, type "make -e GCC= package"
+	3) In this directory, type "make -e STUDIO= package"
 	   NOTE: the full arguments here are required to ensure that the
-	   Makefiles do not attempt to use GCC.
+	   Makefiles do not attempt to use the Sun compilers.
 
-	4) Follow the above procedure starting at step 4.
+	4) Follow the steps as for the Sun Studio compilers above, starting
+	   at step #4.
 
 UNINSTALL
 ---------

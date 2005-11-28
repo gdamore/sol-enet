@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.6 2005/11/27 01:10:30 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.7 2005/11/28 02:34:57 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -303,7 +303,7 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.6 $";
+	char	*rev = "$Revision: 1.7 $";
 	char	*ident = mxfe_ident;
 
         /* this technique works for both RCS and SCCS */
@@ -2496,7 +2496,7 @@ mxfe_intr(gld_mac_info_t *macinfo)
 	DBG(MXFE_DINTR, "interrupted, status = %x", status);
 
 	if (!(status & MXFE_INT_ALL)) {
-		DBG(MXFE_DWARN, " not us? status = %x mask=%x all=%x", status,
+		DBG(MXFE_DINTR, " not us? status = %x mask=%x all=%x", status,
 		    GETCSR(mxfep, MXFE_CSR_IER), MXFE_INT_ALL);
 		mutex_exit(&mxfep->mxfe_intrlock);
 		return (DDI_INTR_UNCLAIMED);
@@ -2506,7 +2506,7 @@ mxfe_intr(gld_mac_info_t *macinfo)
 
 	if (!(mxfep->mxfe_flags & MXFE_RUNNING)) {
 		/* not running, don't touch anything */
-		DBG(MXFE_DWARN, "int while not running, status = %x", status);
+		DBG(MXFE_DINTR, "int while not running, status = %x", status);
 		mutex_exit(&mxfep->mxfe_intrlock);
 		return (DDI_INTR_CLAIMED);
 	}
