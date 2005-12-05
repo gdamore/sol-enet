@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.5 2005/11/27 01:10:05 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.6 2005/12/05 21:41:05 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -76,7 +76,7 @@ static afe_card_t afe_cards[] = {
 	 * Models listed here.
 	 */
 	{ 0x10b7, 0x9300, "3Com 3CSOHO100B-TX", AFE_MODEL_CENTAUR },
-	{ 0x10b8, 0x1255, "SMC1255TX", AFE_MODEL_CENTAUR },
+	{ 0x10b8, 0x1255, "SMC SMC1255TX", AFE_MODEL_CENTAUR },
 	{ 0x111a, 0x1020, "Siemens SpeedStream PCI 10/100",
 	  AFE_MODEL_CENTAUR },
 	{ 0x1113, 0x1207, "Accton EN1207F", AFE_MODEL_CENTAUR },
@@ -85,11 +85,16 @@ static afe_card_t afe_cards[] = {
 	{ 0x1113, 0x9216, "3M VOL-N100VF+TX", AFE_MODEL_CENTAUR },
 	{ 0x1317, 0x0574, "Linksys LNE100TX", AFE_MODEL_CENTAUR },
 	{ 0x1317, 0x0570, "Network Everywhere NC100", AFE_MODEL_CENTAUR },
-	{ 0x13d1, 0xab02, "Abocom FE2500", AFE_MODEL_CENTAUR },
-	{ 0x13d1, 0xab08, "Abocom FE2500MX", AFE_MODEL_CENTAUR },
-	{ 0x16ec, 0x00ed, "U.S. Robotics 10/100 PCI NIC TX",
+	{ 0x1385, 0x511a, "Netgear FA511", AFE_MODEL_CENTAUR },
+	{ 0x13d1, 0xab02, "AboCom FE2500", AFE_MODEL_CENTAUR },
+	{ 0x13d1, 0xab03, "AboCom PCM200", AFE_MODEL_CENTAUR },
+	{ 0x13d1, 0xab08, "AboCom FE2500MX", AFE_MODEL_CENTAUR },
+	{ 0x1414, 0x0001, "Microsoft MN-120", AFE_MODEL_CENTAUR },
+	{ 0x16ec, 0x00ed, "U.S. Robotics USR997900", AFE_MODEL_CENTAUR },
+	{ 0x1734, 0x100c, "Fujitsu-Siemens D1961 Onboard Ethernet",
 	  AFE_MODEL_CENTAUR },
 	{ 0x1737, 0xab08, "Linksys PCMPC200", AFE_MODEL_CENTAUR },
+	{ 0x17b3, 0xab08, "Hawking PN672TX", AFE_MODEL_CENTAUR },
 };
 
 /*
@@ -301,7 +306,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.5 $";
+	char	*rev = "$Revision: 1.6 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */

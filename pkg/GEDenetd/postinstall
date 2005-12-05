@@ -58,7 +58,7 @@ compat2alias()
 	echo $alias
 }
 
-afe_COMPAT="pci1317,985 pci1317,981 pci1317,1985 pci1317,9511 pci1317,9513 pci1113,1216 pci1737,ab08"
+afe_COMPAT="pci1317,985 pci1317,981 pci1317,1985 pci1317,9511 pci1317,9513 pci1113,1216 pci1737,ab08 pci13d1,ab02 pci13d1,ab03, pci13d1,ab08 pci10b7,9300"
 afe_DRVPERM='* 0600 root sys'
 
 mxfe_COMPAT="pci11ad,c115 pci10d9,531 pci10d9,512 pci11fc,9881"
