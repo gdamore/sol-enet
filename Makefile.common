@@ -1,10 +1,10 @@
 #
-# $Id: Makefile.common,v 1.7 2005/11/28 02:34:56 gdamore Exp $
+# $Id: Makefile.common,v 1.8 2005/12/05 05:41:40 gdamore Exp $
 #
 # Makefile.common
 #
 
-VER		=	1.0.5rc1
+VER		=	1.0.5
 REV		:sh=	date '+%Y.%m.%d.%H.%M'
 LINT		=	lint
 LINTFLAGS	=	-erroff=E_BAD_PTR_CAST_ALIGN

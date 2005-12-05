@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: xml2html.pl,v 1.2 2004/08/27 23:33:42 gdamore Exp $
+# $Id: xml2html.pl,v 1.3 2005/12/05 05:41:40 gdamore Exp $
 #
 # This uses the XMLLite module to convert a pseudo-xml document to HTML.
 #
@@ -24,6 +24,7 @@ $xml->{coderefs}->{docnumber} = \&meta;
 $xml->{coderefs}->{version} = \&version;
 $xml->{coderefs}->{var} = \&var;
 $xml->{coderefs}->{entry} = \&entry;
+$xml->{coderefs}->{comment} = \&comment;
 
 sub meta {
   my $ref=shift;
@@ -72,6 +73,11 @@ sub entry {
 sub var {
   my $ref = shift;
   return ('<var><font face="Times">'.$ref->{content}.'</font></var>');
+}
+
+sub comment {
+  my $ref = shift;
+  return ('<!-- '.$ref->{content}.' -->');
 }
 
 sub version {

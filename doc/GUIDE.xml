@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--	ident	"@(#)$Id: GUIDE.xml,v 1.5 2005/11/05 02:47:14 gdamore Exp $ -->
+<!--	ident	"@(#)$Id: GUIDE.xml,v 1.6 2005/12/05 05:41:40 gdamore Exp $ -->
 <html>
 <head>
-<title>AFE and MXFE Ethernet Drivers</title>
+<title>Etherdrivers Administrator's Guide</title>
 <author>Garrett D'Amore</author>
 <docnumber>Version <version/></docnumber>
-<copyright>Copyright 2002-2004</copyright>
+<copyright>Copyright 2002-2005</copyright>
 </head>
 <body>
 <chaphead>About This Book</chaphead>
@@ -36,6 +36,7 @@ In order to perform the tasks outlined in this document, you must have
 <tt>root</tt> privileges for your system.
 </p>
 
+<comment>NEED 17</comment>
 <section>Typographic Conventions</section>
 <p>
 The following table lists the typographic conventions used in this manual.
@@ -76,7 +77,7 @@ Please send your comments to me at
 
 <section>Copyright</section>
 <p>
-Copyright &copy; 2002 - 2004 Garrett D'Amore,
+Copyright &copy; 2002 - 2005 Garrett D'Amore,
 &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
 </p>
 <p>
@@ -99,21 +100,23 @@ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
 </p>
 <section>Trademarks</section>
 <p>
-Sun, Sun Microsystems, and Solaris<sup>TM</sup> are
+Sun, Sun Microsystems, Solaris<sup>TM</sup>, and docs.sun.com are
 trademarks, registered trademarks, or service marks of Sun Microsystems, Inc. 
 SPARC<sup>&reg;</sup> and UltraSPARC<sup>&reg;</sup> are
 registered trademarks of SPARC International, Inc.  Intel<sup>&reg;</sup> is a
-registered trademark of Intel Corporation.  Other marks are the property
-of their respective owners.
+registered trademark of Intel Corporation.  AMD is a trademark of Advanced
+Micro Devices, Inc.  Other marks are the property of their respective owners.
 </p>
 
 <chaphead>Chapter 1 - Before You Begin</chaphead>
 
 <section>System Requirements</section>
 <p>
-This software requires Solaris 7 or newer on Intel processors, or Solaris 8 or
-newer running on SPARC processors. In order to use IPv6, you will need to use
-Solaris 8 or newer.
+This software requires Solaris 7 or newer on Intel and compatible processors,
+or Solaris 8 or newer running on SPARC processors. In order to use IPv6, you
+will need to use Solaris 8 or newer.  This version also includes support
+for 64-bit operation on AMD64 and SPARCv9 ISAs, if a suitable version of
+Solaris is installed.
 </p>
 
 <note>
@@ -133,11 +136,22 @@ href="http://sol-enet.sourceforge.net/support.shtml">http://sol-net.sourceforge.
 <p>
 If the device is not built in to your system, you will need an
 available compatible slot for the card.  Typically this means a
-bus-mastering capable PCI slot, with
-support for 32-bit, 33 MHz devices.  On modern systems, almost any
+bus-mastering capable PCI slot.  On modern systems, almost any
 PCI slot will meet this requirement.  (At the time of this writing, the
-author is unaware of any SPARC system with PCI slots that do not meet
+author is unaware of any modern system with PCI slots that do not meet
 this requirement.)
+</p>
+
+<p>
+There may also be specific requirements for voltage -- most older systems
+support 5 volt operation, but some newer ones may have 3.3V slots.  (PCI 2.3 
+emoved support for 5V operation from the standard.)  Additionally,
+most older network cards are 5V, while some newer ones support either
+3.3V or 5V operation.  Generally, the PCI connectors are keyed
+so that it is impossible to insert a device into a slot that doesn't support
+the voltage requirements of the card.   You should check with your system
+and network card manufacturer if you need more assistance in determining
+compatibility.
 </p>
 
 <p>
@@ -145,7 +159,7 @@ CardBus slots are available on some systems from
 <a href="http://www.tadpolecomputer.com/">Tadpole Computer</a>,
 and Tadpole includes software which makes the CardBus
 slots behave as if they were PCI slots (when 32-bit PC cards
-cards are inserted.)  As a result, it is possible to use these
+are inserted.)  As a result, it is possible to use these
 drivers with certain 32-bit PC cards on these systems.
 </p>
 
@@ -191,7 +205,7 @@ or have equivalent access.
 </p>
 Finally, you will also need a small amount of disk space on your root
 disk in order to complete the installation.  The recommended minimum free
-space is 5 megabytes.
+space is 10 megabytes.
 </p>
 
 <chaphead>Chapter 2 - Installation</chaphead>
@@ -416,7 +430,11 @@ can be accessed on-line at
 <p>
 To set up your ethernet device to act as a client
 for DHCP (Dynamic Host Configuration Protocol) you must create
-a file <tt>/etc/dhcp.</tt><var>interface</var>.  This file should
+an empty file <tt>/etc/hostname.</tt><var>interface</var>.
+</p>
+<p>
+You must also then create a file
+<tt>/etc/dhcp.</tt><var>interface</var>.  This file should
 contain the word <tt>primary</tt> if the interface is your primary
 (or only) network interface.  This will cause DHCP to be used to
 set the hostname, default route, and other global parameters for
@@ -432,6 +450,7 @@ as the primary (and only) interface, using DHCP.
 </p>
 
 <screen>
+# <entry>touch /etc/hostname.mxfe0</entry>
 # <entry>echo primary &gt; /etc/dhcp.mxfe0</entry>
 </screen>
 
@@ -730,7 +749,7 @@ terms:
 </p>
 
 <p>
-Copyright &copy; 2001-2004 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+Copyright &copy; 2001-2005 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
 All rights reserved.
 </p>
 <p>

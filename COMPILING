@@ -1,8 +1,19 @@
 PREREQUISITES
 -------------
 
->>> If you have not done so already, read the README file and User's Guide
->>> before proceeding!
+>>> If you have not done so already, read the README file and Administrator's
+>>> Guide before proceeding!
+>>>
+>>> THIS RELEASE REQUIRES THE SUN STUDIO 11 (OR NEWER) COMPILERS.  ATTEMPTS
+>>> TO USE OTHER COMPILERS MAY RESULT IN EITHER FAILURES TO BUILD THE DRIVERS,
+>>> OR KERNEL CRASHES WHEN TRYING TO USE THE RESULTING BINARIES. 
+>>>
+>>> PLEASE DON'T ASK ME FOR ASSISTANCE IF YOU HAVE TROUBLE AND ARE NOT USING
+>>> THE SUN STUDIO 11 (OR NEWER) COMPILERS.
+>>>
+>>> I've only tested building the latest version on Solaris 10.  While it
+>>> *should* build on Solaris 8 or newer, your mileage may vary.  Note that
+>>> binaries built on Solaris 10 should also run on Solaris 8 or 9.
 >>>
 >>> These are rough directions and assume that you have a basic understanding
 >>> of Solaris System Administration tasks.  You should know how to use the
@@ -19,63 +30,75 @@ PREREQUISITES
 INSTALL
 -------
 
-I've only tested this release using the Sun Studio 11 compilers.  It should
-be possible to use recent versions of gcc (3.3 or better) and possibly even
-older versions of the Sun compilers (depending upon which platform you are
-building for.)  In any case, the Sun Studio 11 compilers are freely available
-without any unreasonable limitation from Sun, so I recommend you use those, as
-this is the compiler that Sun uses to build Solaris itself.
+1) If you do not already have them, download from Sun and install
+   the Studio 11 compilers.  These are free from Sun.
 
-If you have updated information about compiler options, etc., please let me
-know.  However, please don't bother me if you are just having trouble building
-the package from source -- especially if you are not using Sun Studio 11 or
-better -- instead JUST USE THE BINARY RELEASES.
+      Note: While in theory it should be possible to use recent versions
+      of gcc (3.3 or better), I've heard of problems resulting from GCC
+      on amd64 that cleared up after switching to the Sun Studio 11 compilers.  
 
-To build using the Sun Studio compilers:
+2) Make your path look like this:
 
-	1) Ensure that "cc" is on your path and is Studio 11 or newer.  It
-	   *must not* be /usr/ucb/cc.  (Take /usr/ucb out of your path
-	   for this build.  In fact, I recommend taking /usr/ucb out of
-	   your path forever.  If you still use some utilities there, create
-	   a specific alias.  /usr/ucb is "evil" in many regards.)
+	/usr/ccs/bin:/usr/xpg4/bin:/usr/bin:/usr/ccs/bin
 
-	2) Ensure that "make" is on your path, and is /usr/ccs/bin/make.
-	   NOTE: YOU MUST USE SUN'S MAKE, GNUMAKE WILL NOT WORK!!!
+   Assuming you are using csh, you could this:
 
-	3) In this directory, type "make package".
+	% setenv PATH /usr/ccs/bin:/usr/xpg4/bin:/usr/bin:/usr/ccs/bin
 
-	4) This will create a directory called "pkgdir.i386" or "pkgdir.sparc",
-	   depending on which platform you are building on.
+   Note that there is nothing else in this path, and most especially that
+   /usr/ucb is *not* on the path.
 
-	5) Become root using the "su" program.
+3) Append the location where you installed the Sun compilers to the path.
+   If you installed them in the default location of /opt/SUNWspro, and you
+   are using csh, you could use this command:
 
-	6) pkgadd -d pkgdir.`uname -p` all
+	% setenv PATH ${PATH}:/opt/SUNWspro/bin
 
-	7) you can now use the device as any ethernet; create a file for it
-	   as /etc/hostname.afe0 (or whatever) and stick an IP address in
-	   it.
+   (Assuming you installed the Studio 11 compilers in the default location of
+   /opt/SUNWspro/bin.  If you installed them elsewhere, adjust the path
+   appropriately.)
 
-	8) You may wish to reboot at this point to ensure that the
-	   driver is plumbed properly underneath IP.  (If you are saavy with
-	   ifconfig(1M), you can skip this step, but you knew that, right?)
+4) You can verify that you have the Sun make, and that you are not using
+   GNU make (which will NOT WORK), by doing this:
 
-To build using GCC *UNSUPPORTED*:
+	% what `which make`
 
-	1) Make sure you have a recent (e.g. 3.4.x) version of GCC
-	   with both 32 and 64 bit support compiled in.  Note that as
-	   of this writing the version supplied by blastwave on x86
-	   does *not* include 64-bit support.)  Also, make sure that gcc
-	   is on your path.
+   which should look something like this:
 
-	2) Ensure that "make" is on your path, and is /usr/ccs/bin/make.
-	   NOTE: YOU MUST USE SUN'S MAKE, GNUMAKE WILL NOT WORK!!!
+        RELEASE VERSION SunOS 5.10 Patch 118677-01 March 2005
 
-	3) In this directory, type "make -e STUDIO= package"
-	   NOTE: the full arguments here are required to ensure that the
-	   Makefiles do not attempt to use the Sun compilers.
+   (Obviously it will be different if you build on different releases of
+   Solaris.)
 
-	4) Follow the steps as for the Sun Studio compilers above, starting
-	   at step #4.
+5) You can verify that you are using Sun Studio 11 by this command:
+
+	% cc -V
+
+   which should look this:
+
+	cc: Sun C 5.8 2005/10/13
+	usage: cc [ options] files.  Use 'cc -flags' for details
+
+6) In this directory, build the software using this command
+
+	% make package
+
+7) This will create a directory called "pkgdir.i386" or "pkgdir.sparc",
+   depending on which platform you are building on.
+
+8) Become root using "su":
+
+	% su
+	Password:
+	#
+
+9) Install the packages you built in step 6.
+
+	# pkgadd -d pkgdir.`uname -p` all
+
+10) You can now use the device as any ethernet.  Please see the
+    Administrator's Guide for more information about configuring your network
+    interface.
 
 UNINSTALL
 ---------
