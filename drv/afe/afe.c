@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.6 2005/12/05 21:41:05 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.7 2005/12/19 23:50:01 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -76,6 +76,7 @@ static afe_card_t afe_cards[] = {
 	 * Models listed here.
 	 */
 	{ 0x10b7, 0x9300, "3Com 3CSOHO100B-TX", AFE_MODEL_CENTAUR },
+	{ 0x1113, 0xec02, "SMC SMC1244TX", AFE_MODEL_CENTAUR },
 	{ 0x10b8, 0x1255, "SMC SMC1255TX", AFE_MODEL_CENTAUR },
 	{ 0x111a, 0x1020, "Siemens SpeedStream PCI 10/100",
 	  AFE_MODEL_CENTAUR },
@@ -306,7 +307,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.6 $";
+	char	*rev = "$Revision: 1.7 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
