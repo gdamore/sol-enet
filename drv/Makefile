@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.2 2004/08/27 23:03:38 gdamore Exp $
+# $Id: Makefile,v 1.3 2006/05/26 18:17:23 gdamore Exp $
 #
 # Top-level Makefile for drivers.
 #
@@ -19,7 +19,7 @@ DISTSRCS	=	Makefile.common Makefile.drv Makefile
 
 $(SUBDIRS):	FRC
 	@echo "## Making $(TARGET) for $(ISA) in drv/$@"; \
-	( cd $@; $(MAKE) ISA=$(ISA) RELDIR=drv/$@ $(TARGET));
+	( cd $@; $(MAKE) ISA=$(ISA) DEBUG=$(DEBUG) RELDIR=drv/$@ $(TARGET));
 
 all:		$(SUBDIRS)
 install:	$(SUBDIRS)

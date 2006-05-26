@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.2 2004/08/27 22:59:23 gdamore Exp $
+# $Id: Makefile,v 1.3 2006/05/26 18:17:23 gdamore Exp $
 #
 # cmd/Makefile
 #
@@ -19,7 +19,7 @@ DISTSRCS	=	Makefile.common Makefile.cmd Makefile
 
 $(SUBDIRS):	FRC
 	@echo "## Making $(TARGET) for $(ISA) in cmd/$@"; \
-	( cd $@; $(MAKE) ISA=$(ISA) $(TARGET));
+	( cd $@; $(MAKE) DEBUG=$(DEBUG) ISA=$(ISA) $(TARGET));
 
 all:		$(SUBDIRS)
 install:	$(SUBDIRS)

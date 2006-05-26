@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.4 2005/11/28 17:34:25 gdamore Exp $
+# $Id: Makefile,v 1.5 2006/05/26 18:17:23 gdamore Exp $
 #
 # Makefile
 #
@@ -30,6 +30,11 @@ DISTSRCS	=	Makefile Makefile.common Makefile.targ \
 
 DISTLIST	=	$(MAKE) RELDIR=$(DISTNAME)-$(VER) distlist
 
+HASH		:sh=	echo "\043"
+
+distdebug :=	DEBUG=-DDEBUG
+distbin :=	DEBUG=
+
 all:		inc .WAIT drv cmd man
 install:	all .WAIT inc drv cmd man
 lint:		drv cmd
@@ -47,7 +52,7 @@ dist:	distsrc .WAIT distbin
 
 distsrc:	$(DISTNAME)-$(VER)-src.zip
 
-distbin:	$(DISTNAME)-$(VER)-$(ARCH).zip
+distbin distdebug:	$(DISTNAME)-$(VER)-$(ARCH).zip
 
 distclean:	clean
 	$(RM) $(DISTNAME)-$(VER)-src.zip $(DISTNAME)-$(VER)-sparc.zip \
@@ -78,7 +83,7 @@ $(SUBDIRS):	FRC
 	@for ISA in $(ARCHS); do	\
 		echo "## Making $(TARGET) for $$ISA in $@"; \
 		test -d obj.$$ISA || $(MKDIR) obj.$$ISA;		\
-		( cd $@; $(MAKE) ISA=$$ISA $(TARGET));	\
+		( cd $@; $(MAKE) DEBUG=$(DEBUG) ISA=$$ISA $(TARGET));\
 	done
 
 package:	all
