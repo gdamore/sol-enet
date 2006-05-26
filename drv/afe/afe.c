@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.7 2005/12/19 23:50:01 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.8 2006/05/26 17:58:46 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -95,6 +95,7 @@ static afe_card_t afe_cards[] = {
 	{ 0x1734, 0x100c, "Fujitsu-Siemens D1961 Onboard Ethernet",
 	  AFE_MODEL_CENTAUR },
 	{ 0x1737, 0xab08, "Linksys PCMPC200", AFE_MODEL_CENTAUR },
+	{ 0x1737, 0xab09, "Linksys PCM200", AFE_MODEL_CENTAUR },
 	{ 0x17b3, 0xab08, "Hawking PN672TX", AFE_MODEL_CENTAUR },
 };
 
@@ -307,7 +308,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.7 $";
+	char	*rev = "$Revision: 1.8 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
