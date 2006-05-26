@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--	ident	"@(#)$Id: GUIDE.xml,v 1.6 2005/12/05 05:41:40 gdamore Exp $ -->
+<!--	ident	"@(#)$Id: GUIDE.xml,v 1.7 2006/05/26 18:24:28 gdamore Exp $" -->
 <html>
 <head>
 <title>Etherdrivers Administrator's Guide</title>
 <author>Garrett D'Amore</author>
 <docnumber>Version <version/></docnumber>
-<copyright>Copyright 2002-2005</copyright>
+<copyright>Copyright 2002-2006</copyright>
 </head>
 <body>
 <chaphead>About This Book</chaphead>
@@ -36,7 +36,6 @@ In order to perform the tasks outlined in this document, you must have
 <tt>root</tt> privileges for your system.
 </p>
 
-<comment>NEED 17</comment>
 <section>Typographic Conventions</section>
 <p>
 The following table lists the typographic conventions used in this manual.
@@ -77,7 +76,7 @@ Please send your comments to me at
 
 <section>Copyright</section>
 <p>
-Copyright &copy; 2002 - 2005 Garrett D'Amore,
+Copyright &copy; 2002 - 2006 Garrett D'Amore,
 &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
 </p>
 <p>
@@ -749,7 +748,7 @@ terms:
 </p>
 
 <p>
-Copyright &copy; 2001-2005 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
+Copyright &copy; 2001-2006 by Garrett D'Amore &lt;<a href="mailto:garrett@damore.org">garrett@damore.org</a>&gt;.
 All rights reserved.
 </p>
 <p>

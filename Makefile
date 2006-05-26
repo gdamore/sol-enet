@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.5 2006/05/26 18:17:23 gdamore Exp $
+# $Id: Makefile,v 1.6 2006/05/26 18:24:27 gdamore Exp $
 #
 # Makefile
 #
@@ -58,7 +58,7 @@ distclean:	clean
 	$(RM) $(DISTNAME)-$(VER)-src.zip $(DISTNAME)-$(VER)-sparc.zip \
 	$(DISTNAME)-$(VER)-i386.zip
 
-$(DISTNAME)-$(VER)-$(ARCH).zip:	package docs
+$(DISTNAME)-$(VER)-$(ARCH).zip:	all .WAIT package docs
 	@$(RM) $(DISTNAME)-$(VER)
 	mkdir $(DISTNAME)-$(VER)
 	mkdir $(DISTNAME)-$(VER)/Packages
