@@ -1,21 +1,11 @@
 #
-#ident	@(#)$Id: TODO,v 1.3 2005/11/05 02:09:44 gdamore Exp $
+#ident	@(#)$Id: TODO,v 1.4 2006/08/08 00:32:56 gdamore Exp $
 #
 ADMtek ethernet driver TODO list
 ================================
 
-	1) DR/CPR/PM	- add support for DR and power management.  This
-			  will be a multistep process.  We may elect to
-			  only support the S8 interfaces.
-
-			  Note: on Solaris x86 (Solaris 8) only PCI
-			  hotplug is supported, and this limited subset
-			  is already functional in the driver (only
-			  DDI_DETACH/DDI_ATTACH need proper support.)
-
-			  Update: 8/27/2004: CPR and DR have been tested,
-			  on SPARC so this works.  Power management is
-			  a different story -- not even the Sun NICs do
+	1) PM		- add support for power management.
+			  Note that not even the Sun NICs do
 			  this right now.  Its probably of little value
 			  anyway -- the power consumed by a typical ethernet
 			  chip is usually negligble.  (Some high-end gigabit
@@ -55,13 +45,23 @@ ADMtek ethernet driver TODO list
 			  this framework significantly, creating a desire
 			  to have this functionality implemented.
 
-	5) bug fixes	- I have reports that the driver melts down under
-			  certain load profiles.  I have not been able to
-			  reproduce this, as yet.
-
 	6) VLAN	support	- Solaris 10 has VLAN hooks in GLD, so we could
 			  support VLANs.
 
+	7) nemo/GLDv3	- Solaris 10/11 have the new nemo framework, which
+			  supports a bunch of new features (VLAN, jumbo frames,
+			  802.3ad aggregation, etc.)  We should support this,
+			  at some point.
+
+	8) new intr DDI	- there is a new DDI for interrupt handling in 
+			  OpenSolaris.  We should probably convert to it at
+			  some point.  The old API we are using is now
+			  deprecated (though I expect it will be supported for
+			  some time to come.)
+
+	9) sunvts	- it would be nice to be able to use sunvts to test
+			  this.  newer sunvts just needs a few ioctls from
+			  what I can see.  (mostly for loopback manipulation)
 
 Completed items
 ---------------
@@ -109,6 +109,15 @@ Completed items
 			  may provide some example features.
 
 			  Note: loopback support is still missing.
+
+	14) DR/CPR	- dynamic reconfiguration/hotplug/suspend-resume.
+			  This has been tested on SPARC systems.
+
+	15) bug fixes	- I have reports that the driver melts down under
+			  certain load profiles.  I have rewritten some of the
+			  interrupt handling, and the problem seems to have
+			  been eradicated.
+
 
 Closed items
 ------------
