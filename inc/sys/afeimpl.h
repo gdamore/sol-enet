@@ -32,7 +32,7 @@
 #ifndef	_AFEIMPL_H
 #define	_AFEIMPL_H
 
-#ident	"@(#)$Id: afeimpl.h,v 1.2 2004/08/27 23:39:34 gdamore Exp $"
+#ident	"@(#)$Id: afeimpl.h,v 1.3 2006/08/08 00:11:08 gdamore Exp $"
 
 #ifdef	_KERNEL
 
@@ -168,6 +168,7 @@ struct afe {
 	 * PSARC actually gave them non-private commitment levels, but
 	 * failed to follow through by publishing them anywhere.)
 	 */
+	kstat_t			*afe_intrstat;
 	unsigned		afe_ifspeed;
 	unsigned		afe_media;
 	unsigned		afe_intr;

@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.9 2006/05/26 18:24:28 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.10 2006/08/08 00:11:06 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -165,6 +165,8 @@ static void	afe_ndinit(afe_t *);
 #ifdef	DEBUG
 static void	afe_dprintf(afe_t *, const char *, int, char *, ...);
 #endif
+
+#define	KIOIP	KSTAT_INTR_PTR(afep->afe_intrstat)
 
 /*
  * Stream information
@@ -308,7 +310,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.9 $";
+	char	*rev = "$Revision: 1.10 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
@@ -354,6 +356,7 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	ushort			cachesize;
 	afe_card_t		*cardp;
 	int			i;
+	char			buf[16];
 
 	switch (cmd) {
 	case DDI_RESUME:
@@ -572,6 +575,16 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	afe_ndinit(afep);
 
 	/*
+	 * Initialize interrupt kstat.
+	 */
+	sprintf(buf, "afec%d", inst);
+	afep->afe_intrstat = kstat_create("afe", inst, buf, "controller",
+	    KSTAT_TYPE_INTR, 1, KSTAT_FLAG_PERSISTENT);
+	if (afep->afe_intrstat) {
+		kstat_install(afep->afe_intrstat);
+	}
+
+	/*
 	 * Enable bus master, IO space, and memory space accesses.
 	 */
 	pci_config_put16(pci, AFE_PCI_COMM,
@@ -641,6 +654,9 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 failed:
 	if (macinfo->gldm_cookie != NULL) {
 		ddi_remove_intr(dip, 0, macinfo->gldm_cookie);
+	}
+	if (afep->afe_intrstat) {
+		kstat_delete(afep->afe_intrstat);
 	}
 	afe_ndfini(afep);
 	mutex_destroy(&afep->afe_buflock);
@@ -2323,11 +2339,15 @@ afe_intr(gld_mac_info_t *macinfo)
 	/* get interrupt status bits */
 	status = GETCSR(afep, AFE_CSR_SR2);
 	if (!(status & AFE_INT_ALL)) {
+		if (afep->afe_intrstat)
+			KIOIP->intrs[KSTAT_INTR_SPURIOUS]++;
 		mutex_exit(&afep->afe_intrlock);
 		return (DDI_INTR_UNCLAIMED);
 	}
 	/* ack the interrupt */
 	PUTCSR(afep, AFE_CSR_SR2, status & AFE_INT_ALL);
+	if (afep->afe_intrstat)
+		KIOIP->intrs[KSTAT_INTR_HARD]++;
 
 	DBG(AFE_DINTR, "interrupted, status = %x", status);
 

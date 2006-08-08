@@ -32,7 +32,7 @@
 #ifndef	_MXFEIMPL_H
 #define	_MXFEIMPL_H
 
-#ident	"@(#)$Id: mxfeimpl.h,v 1.2 2004/08/28 06:09:46 gdamore Exp $"
+#ident	"@(#)$Id: mxfeimpl.h,v 1.3 2006/08/08 00:11:08 gdamore Exp $"
 
 #ifdef	_KERNEL
 
@@ -183,6 +183,7 @@ struct mxfe {
 	 * PSARC actually gave them non-private commitment levels, but
 	 * failed to follow through by publishing them anywhere.)
 	 */
+	kstat_t			*mxfe_intrstat;
 	ulong_t			mxfe_linkup;
 	unsigned		mxfe_ifspeed;
 	unsigned		mxfe_media;

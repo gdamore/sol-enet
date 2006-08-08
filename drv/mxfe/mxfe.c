@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.7 2005/11/28 02:34:57 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.8 2006/08/08 00:11:07 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -160,6 +160,8 @@ static void	mxfe_ndinit(mxfe_t *);
 #ifdef	DEBUG
 static void	mxfe_dprintf(mxfe_t *, const char *, int, char *, ...);
 #endif
+
+#define	KIOIP	KSTAT_INTR_PTR(mxfep->mxfe_intrstat)
 
 /*
  * Stream information
@@ -303,7 +305,7 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.7 $";
+	char	*rev = "$Revision: 1.8 $";
 	char	*ident = mxfe_ident;
 
         /* this technique works for both RCS and SCCS */
@@ -349,6 +351,7 @@ mxfe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	ushort			cachesize;
 	mxfe_card_t		*cardp;
 	int			i;
+	char			buf[16];
 
 	switch (cmd) {
 	case DDI_RESUME:
@@ -555,6 +558,16 @@ mxfe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	mxfe_ndinit(mxfep);
 
 	/*
+	 * Initialize interrupt kstat.
+	 */
+	sprintf(buf, "mxfec%d", inst);
+	mxfep->mxfe_intrstat = kstat_create("mxfe", inst, buf, "controller",
+	    KSTAT_TYPE_INTR, 1, KSTAT_FLAG_PERSISTENT);
+	if (mxfep->mxfe_intrstat) {
+		kstat_install(mxfep->mxfe_intrstat);
+	}
+
+	/*
 	 * Enable bus master, IO space, and memory space accesses.
 	 */
 	pci_config_put16(pci, MXFE_PCI_COMM,
@@ -633,6 +646,9 @@ failed:
 	if (macinfo->gldm_cookie != NULL) {
 		ddi_remove_intr(dip, 0, macinfo->gldm_cookie);
 	}
+	if (mxfep->mxfe_intrstat) {
+		kstat_delete(mxfep->mxfe_intrstat);
+	}
 	mxfe_ndfini(mxfep);
 	mutex_destroy(&mxfep->mxfe_buflock);
 	mutex_destroy(&mxfep->mxfe_intrlock);
@@ -671,6 +687,11 @@ mxfe_detach(dev_info_t *dip, ddi_detach_cmd_t cmd)
 
 		/* clean up and shut down device */
 		ddi_remove_intr(dip, 0, macinfo->gldm_cookie);
+
+		/* cleanup kstats */
+		if (mxfep->mxfe_intrstat) {
+			kstat_delete(mxfep->mxfe_intrstat);
+		}
 
 		/* FIXME: delete properties */
 
@@ -2498,11 +2519,15 @@ mxfe_intr(gld_mac_info_t *macinfo)
 	if (!(status & MXFE_INT_ALL)) {
 		DBG(MXFE_DINTR, " not us? status = %x mask=%x all=%x", status,
 		    GETCSR(mxfep, MXFE_CSR_IER), MXFE_INT_ALL);
+		if (mxfep->mxfe_intrstat)
+			KIOIP->intrs[KSTAT_INTR_SPURIOUS]++;
 		mutex_exit(&mxfep->mxfe_intrlock);
 		return (DDI_INTR_UNCLAIMED);
 	}
 	/* ack the interrupt */
 	PUTCSR(mxfep, MXFE_CSR_SR, status & MXFE_INT_ALL);
+	if (mxfep->mxfe_intrstat)
+		KIOIP->intrs[KSTAT_INTR_HARD]++;
 
 	if (!(mxfep->mxfe_flags & MXFE_RUNNING)) {
 		/* not running, don't touch anything */
