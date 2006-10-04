@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.10 2006/08/08 00:11:06 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.11 2006/10/04 22:59:24 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -151,7 +151,7 @@ static void	afe_checklinkmii(afe_t *);
 static void	afe_disableinterrupts(afe_t *);
 static void	afe_enableinterrupts(afe_t *);
 static void	afe_reclaim(afe_t *);
-static void	afe_read(afe_t *, int, unsigned);
+static mblk_t *	afe_read(afe_t *, int, unsigned);
 static int	afe_ndaddbytes(mblk_t *, char *, int);
 static int	afe_ndaddstr(mblk_t *, char *, int);
 static void	afe_ndparsestring(mblk_t *, char *, int);
@@ -310,7 +310,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.10 $";
+	char	*rev = "$Revision: 1.11 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
@@ -506,29 +506,28 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	afep->afe_cardp = cardp;
 	afep->afe_phyaddr = -1;
 	afep->afe_cachesize = cachesize;
-	afep->afe_numbufs = ddi_getprop(DDI_DEV_T_ANY, dip, DDI_PROP_CANSLEEP,
-	    "buffers", AFE_NUMBUFS);
+	afep->afe_numbufs = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    DDI_PROP_CANSLEEP, "buffers", AFE_NUMBUFS);
 
 	/* default properties */
-	afep->afe_adv_aneg = ddi_getprop(DDI_DEV_T_ANY, dip,
-	    DDI_PROP_CANSLEEP, "adv_autoneg_cap", 1);
-	afep->afe_adv_100T4 = ddi_getprop(DDI_DEV_T_ANY, dip,
-	    DDI_PROP_CANSLEEP, "adv_100T4_cap", 1);
-	afep->afe_adv_100fdx = ddi_getprop(DDI_DEV_T_ANY, dip,
-	    DDI_PROP_CANSLEEP, "adv_100fdx_cap", 1);
-	afep->afe_adv_100hdx = ddi_getprop(DDI_DEV_T_ANY, dip,
-	    DDI_PROP_CANSLEEP, "adv_100hdx_cap", 1);
-	afep->afe_adv_10fdx = ddi_getprop(DDI_DEV_T_ANY, dip,
-	    DDI_PROP_CANSLEEP, "adv_10fdx_cap", 1);
-	afep->afe_adv_10hdx = ddi_getprop(DDI_DEV_T_ANY, dip,
-	    DDI_PROP_CANSLEEP, "adv_10hdx_cap", 1);
+	afep->afe_adv_aneg = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    0, "adv_autoneg_cap", 1);
+	afep->afe_adv_100T4 = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    0, "adv_100T4_cap", 1);
+	afep->afe_adv_100fdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    0, "adv_100fdx_cap", 1);
+	afep->afe_adv_100hdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    0, "adv_100hdx_cap", 1);
+	afep->afe_adv_10fdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    0, "adv_10fdx_cap", 1);
+	afep->afe_adv_10hdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    0, "adv_10hdx_cap", 1);
 
 	/*
 	 * Legacy properties.  These override newer properties, only
 	 * for ease of implementation.
 	 */
-	switch (ddi_getprop(DDI_DEV_T_ANY, dip, DDI_PROP_CANSLEEP,
-		    "speed", 0)) {
+	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "speed", 0)) {
 	case 100:
 		afep->afe_adv_10fdx = 0;
 		afep->afe_adv_10hdx = 0;
@@ -539,8 +538,7 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 		break;
 	}
 
-	switch (ddi_getprop(DDI_DEV_T_ANY, dip, DDI_PROP_CANSLEEP,
-		    "full-duplex", -1)) {
+	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "full-duplex", -1)) {
 	case 1:
 		afep->afe_adv_10hdx = 0;
 		afep->afe_adv_100hdx = 0;
@@ -551,8 +549,8 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 		break;
 	}
 
-	afep->afe_forcefiber = ddi_getprop(DDI_DEV_T_ANY, afep->afe_dip,
-	    DDI_PROP_CANSLEEP, "fiber", 0);
+	afep->afe_forcefiber = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
+	    0, "fiber", 0);
 
 	/*
 	 * XXX: Add in newer MII properties here.
@@ -719,6 +717,12 @@ afe_detach(dev_info_t *dip, ddi_detach_cmd_t cmd)
 			/* then free up DMA resourcess */
 			afe_freerings(afep);
 		}
+
+		/* delete kstats */
+		if (afep->afe_intrstat) {
+			kstat_delete(afep->afe_intrstat);
+		}
+
 		afe_ndfini(afep);
 		ddi_regs_map_free(&afep->afe_regshandle);
 		mutex_destroy(&afep->afe_buflock);
@@ -1513,6 +1517,8 @@ afe_reportlink(afe_t *afep)
 static void
 afe_checklink(afe_t *afep)
 {
+	if ((afep->afe_flags & AFE_RUNNING) == 0)
+		return;
 	switch (AFE_MODEL(afep)) {
 	case AFE_MODEL_COMET:
 		afe_checklinkcomet(afep);
@@ -2324,8 +2330,12 @@ afe_intr(gld_mac_info_t *macinfo)
 	dev_info_t	*dip = afep->afe_dip;
 	int		reset = 0;
 	int		linkcheck = 0;
+	int		wantw = 0;
+	mblk_t		*mp = NULL, **mpp;
 
 	afep->afe_intr++;
+
+	mpp = &mp;
 
 	mutex_enter(&afep->afe_intrlock);
 
@@ -2364,11 +2374,8 @@ afe_intr(gld_mac_info_t *macinfo)
 	}
 
 	if (status & (AFE_INT_TXOK|AFE_INT_TXJABBER|AFE_INT_TXUNDERFLOW)) {
-		/* transmit completed, reclaim bufs and wake up any waiter */
-		mutex_enter(&afep->afe_xmtlock);
-		afe_reclaim(afep);
-		mutex_exit(&afep->afe_xmtlock);
-		gld_sched(macinfo);
+		/* transmit completed */
+		wantw = 1;
 	}
 
 	if (status & (AFE_INT_RXOK | AFE_INT_RXNOBUF)) {
@@ -2390,7 +2397,10 @@ afe_intr(gld_mac_info_t *macinfo)
 			    "(status = 0x%x, length=%d)",
 			    afep->afe_rxcurrent, status, AFE_RXLENGTH(status));
 
-			afe_read(afep, afep->afe_rxcurrent, status);
+			*mpp = afe_read(afep, afep->afe_rxcurrent, status);
+			if (*mpp) {
+				mpp = &(*mpp)->b_next;
+			}
 
 			/* give it back to the hardware */
 			PUTDESC(afep, rmd->desc_status, AFE_RXSTAT_OWN);
@@ -2441,12 +2451,17 @@ afe_intr(gld_mac_info_t *macinfo)
 			break;
 		}
 	}
-	if (status & (AFE_INT_TXUNDERFLOW|AFE_INT_TXJABBER)) {
-		/* stats updated in afe_reclaim() */
+	if (status & AFE_INT_TXUNDERFLOW) {
+		afe_error(dip, "TX underflow detected");
+		reset = 1;
+	}
+	if (status & (AFE_INT_TXJABBER)) {
+		afe_error(dip, "TX jabber detected");
 		reset = 1;
 	}
 
 	if (status & AFE_INT_RXJABBER) {
+		afe_error(dip, "RX jabber detected");
 		afep->afe_errrcv++;
 		reset = 1;
 	}
@@ -2456,19 +2471,49 @@ afe_intr(gld_mac_info_t *macinfo)
 	 */
 	afep->afe_missed += (GETCSR(afep, AFE_CSR_LPC) & AFE_LPC_COUNT);
 
+	mutex_exit(&afep->afe_intrlock);
+
+	/*
+	 * Send up packets.  We do this outside of the intrlock.
+	 */
+	while (mp) {
+		mblk_t *nmp = mp->b_next;
+		mp->b_next = NULL;
+		gld_recv(afep->afe_macinfo, mp);
+		mp = nmp;
+	}
+	
+	/*
+	 * Reclaim transmitted buffers and reschedule any waiters.
+	 */
+	if (wantw) {
+		mutex_enter(&afep->afe_xmtlock);
+		afe_reclaim(afep);
+		mutex_exit(&afep->afe_xmtlock);
+		gld_sched(macinfo);
+	}
+	
 	if (linkcheck) {
 		mutex_enter(&afep->afe_xmtlock);
 		afe_checklink(afep);
 		mutex_exit(&afep->afe_xmtlock);
 	}
 
-	mutex_exit(&afep->afe_intrlock);
-
 	if (reset) {
 		/* XXX: FIXME -- reset chip and reclaim lost tx packets */
 		/* reset the chip in an attempt to fix things */
-		afe_stop(macinfo);
-		afe_start(macinfo);
+		mutex_enter(&afep->afe_intrlock);
+		mutex_enter(&afep->afe_xmtlock);
+		/*
+		 * we only reset the chip if we think it should be running
+		 * This test is necessary to close a race with gld_stop.
+		 */
+		if (afep->afe_flags & AFE_RUNNING) {
+			afe_stopmac(afep);
+			afe_startmac(afep);
+		}
+		mutex_exit(&afep->afe_xmtlock);
+		mutex_exit(&afep->afe_intrlock);
 	}
 	return (DDI_INTR_CLAIMED);
 }
@@ -2601,6 +2646,9 @@ afe_reclaim(afe_t *afep)
 {
 	afe_desc_t	*tmdp;
 
+	if ((afep->afe_flags & AFE_RUNNING) == 0)
+		return;
+
 	for (;;) {
 		unsigned	status;
 		afe_buf_t	*bufp;
@@ -2680,7 +2728,7 @@ afe_reclaim(afe_t *afep)
 	}
 }
 
-static void
+static mblk_t *
 afe_read(afe_t *afep, int index, unsigned status)
 {
 	unsigned		length;
@@ -2697,7 +2745,7 @@ afe_read(afe_t *afep, int index, unsigned status)
 	if ((status & AFE_RXSTAT_LAST) == 0) {
 		/* its an oversize packet!  ignore it for now */
 		DBG(AFE_DRECV, "rx oversize packet");
-		return;
+		return (NULL);
 	}
 
 	if (status & AFE_RXSTAT_DESCERR) {
@@ -2763,7 +2811,7 @@ afe_read(afe_t *afep, int index, unsigned status)
 		afep->afe_errrcv++;
 		/* packet was munged, drop it */
 		DBG(AFE_DRECV, "dropping frame, status = 0x%x", status);
-		return;
+		return (NULL);
 	}
 
 	/* sync the buffer before we look at it */
@@ -2775,7 +2823,7 @@ afe_read(afe_t *afep, int index, unsigned status)
 	 */
 	if ((mp = allocb(length + AFE_HEADROOM, BPRI_LO)) == NULL) {
 		afep->afe_norcvbuf++;
-		return;
+		return (NULL);
 	}
 
 	/* offset by headroom (should be 2 modulo 4), avoids bcopy in IP */
@@ -2783,7 +2831,7 @@ afe_read(afe_t *afep, int index, unsigned status)
 	bcopy((char *)bufp->bp_buf, mp->b_rptr, length);
 	mp->b_wptr = mp->b_rptr + length;
 
-	gld_recv(afep->afe_macinfo, mp);
+	return (mp);
 }
 
 /*
