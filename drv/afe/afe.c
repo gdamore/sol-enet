@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.11 2006/10/04 22:59:24 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.12 2006/10/17 02:26:14 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -310,7 +310,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.11 $";
+	char	*rev = "$Revision: 1.12 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
@@ -2410,6 +2410,8 @@ afe_intr(gld_mac_info_t *macinfo)
 			afep->afe_rxcurrent++;
 			afep->afe_rxcurrent %= AFE_RXRING;
 
+			/* poll demand the receiver */
+			PUTCSR(afep, AFE_CSR_RDR, 1);
 		}
 
 		/* we rec'd a packet, if linkdown, verify */
@@ -2426,12 +2428,8 @@ afe_intr(gld_mac_info_t *macinfo)
 	}
 
 	if (status & (AFE_INT_RXNOBUF | AFE_INT_RXIDLE)) {
-
-		/* enable the receiver */
-		
+		/* restart the receiver */
 		SETBIT(afep, AFE_CSR_NAR, AFE_RX_ENABLE);
-		/* PUTCSR(afep, AFE_CSR_RDR, 1); */
-		/* reset = 1; */
 	}
 
 	if (status & AFE_INT_BUSERR) {
@@ -2479,7 +2477,7 @@ afe_intr(gld_mac_info_t *macinfo)
 	while (mp) {
 		mblk_t *nmp = mp->b_next;
 		mp->b_next = NULL;
-		gld_recv(afep->afe_macinfo, mp);
+		gld_recv(macinfo, mp);
 		mp = nmp;
 	}
 	
@@ -2500,7 +2498,6 @@ afe_intr(gld_mac_info_t *macinfo)
 	}
 
 	if (reset) {
-		/* XXX: FIXME -- reset chip and reclaim lost tx packets */
 		/* reset the chip in an attempt to fix things */
 		mutex_enter(&afep->afe_intrlock);
 		mutex_enter(&afep->afe_xmtlock);

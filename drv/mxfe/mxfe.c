@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the Macronix 98715
  *
- * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2006 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.8 2006/08/08 00:11:07 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.9 2006/10/17 02:26:15 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -146,7 +146,7 @@ static void	mxfe_checklinknway(mxfe_t *);
 static void	mxfe_disableinterrupts(mxfe_t *);
 static void	mxfe_enableinterrupts(mxfe_t *);
 static void	mxfe_reclaim(mxfe_t *);
-static void	mxfe_read(mxfe_t *, int);
+static mblk_t	*mxfe_read(mxfe_t *, int);
 static int	mxfe_ndaddbytes(mblk_t *, char *, int);
 static int	mxfe_ndaddstr(mblk_t *, char *, int);
 static void	mxfe_ndparsestring(mblk_t *, char *, int);
@@ -305,7 +305,7 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.8 $";
+	char	*rev = "$Revision: 1.9 $";
 	char	*ident = mxfe_ident;
 
         /* this technique works for both RCS and SCCS */
@@ -2501,8 +2501,12 @@ mxfe_intr(gld_mac_info_t *macinfo)
 	dev_info_t	*dip = mxfep->mxfe_dip;
 	int		reset = 0;
 	int		linkcheck = 0;
+	int		wantw;
+	mblk_t		*mp = NULL, **mpp;
 
 	mxfep->mxfe_intr++;
+
+	mpp = &mp;
 
 	mutex_enter(&mxfep->mxfe_intrlock);
 
@@ -2545,11 +2549,8 @@ mxfe_intr(gld_mac_info_t *macinfo)
 	}
 
 	if (status & MXFE_INT_TXNOBUF) {
-		/* transmit completed, reclaim descriptors */
-		mutex_enter(&mxfep->mxfe_xmtlock);
-		mxfe_reclaim(mxfep);
-		mutex_exit(&mxfep->mxfe_xmtlock);
-		gld_sched(macinfo);
+		/* transmit completed */
+		wantw = 1;
 	}
 
 	if (status & (MXFE_INT_RXOK | MXFE_INT_RXNOBUF)) {
@@ -2572,15 +2573,18 @@ mxfe_intr(gld_mac_info_t *macinfo)
 			    mxfep->mxfe_rxcurrent, status,
 			    MXFE_RXLENGTH(status));
 
-			mxfe_read(mxfep, mxfep->mxfe_rxcurrent);
-
-			/* advance to next RMD */
-			mxfep->mxfe_rxcurrent++;
-			mxfep->mxfe_rxcurrent %= mxfep->mxfe_rxring;
+			*mpp = mxfe_read(mxfep, mxfep->mxfe_rxcurrent);
+			if (*mpp) {
+				mpp = &(*mpp)->b_next;
+			}
 
 			/* give it back to the hardware */
 			PUTDESC(mxfep, rmd->desc_status, MXFE_RXSTAT_OWN);
 			SYNCDESC(mxfep, rmd, DDI_DMA_SYNC_FORDEV);
+
+			/* advance to next RMD */
+			mxfep->mxfe_rxcurrent++;
+			mxfep->mxfe_rxcurrent %= mxfep->mxfe_rxring;
 
 			/* poll demand the receiver */
 			PUTCSR(mxfep, MXFE_CSR_RDR, 1);
@@ -2594,6 +2598,7 @@ mxfe_intr(gld_mac_info_t *macinfo)
 
 	if (status & MXFE_INT_RXNOBUF) {
 		mxfep->mxfe_norcvbuf++;
+
 		DBG(MXFE_DINTR, "rxnobuf interrupt!");
 	}
 
@@ -2620,11 +2625,11 @@ mxfe_intr(gld_mac_info_t *macinfo)
 		}
 	}
 	if (status & MXFE_INT_TXUNDERFLOW) {
-		/* stats updated in mxfe_reclaim() */
+		mxfe_error(dip, "TX underflow detected");
 		reset = 1;
 	}
 	if (status & MXFE_INT_TXJABBER) {
-		/* stats updated in mxfe_reclaim() */
+		mxfe_error(dip, "TX jabber detected");
 		reset = 1;
 	}
 	if (status & MXFE_INT_RXJABBER) {
@@ -2637,19 +2642,48 @@ mxfe_intr(gld_mac_info_t *macinfo)
 	 */
 	mxfep->mxfe_missed += (GETCSR(mxfep, MXFE_CSR_LPC) & MXFE_LPC_COUNT);
 
+	mutex_exit(&mxfep->mxfe_intrlock);
+
+	/*
+	 * Send up packets.  We do this outside of the intrlock.
+	 */
+	while (mp) {
+		mblk_t *nmp = mp->b_next;
+		mp->b_next = NULL;
+		gld_recv(macinfo, mp);
+		mp = nmp;
+	}
+
+	/*
+	 * Reclaim transmitted buffers and reschedule any waiters.
+	 */
+	if (wantw) {
+		mutex_enter(&mxfep->mxfe_xmtlock);
+		mxfe_reclaim(mxfep);
+		mutex_exit(&mxfep->mxfe_xmtlock);
+		gld_sched(macinfo);
+	}
+
 	if (linkcheck) {
 		mutex_enter(&mxfep->mxfe_xmtlock);
 		mxfe_checklink(mxfep);
 		mutex_exit(&mxfep->mxfe_xmtlock);
 	}
 
-	mutex_exit(&mxfep->mxfe_intrlock);
-
 	if (reset) {
-		/* XXXX: FIXME */
 		/* reset the chip in an attempt to fix things */
-		mxfe_stop(macinfo);
-		mxfe_start(macinfo);
+		mutex_enter(&mxfep->mxfe_intrlock);
+		mutex_enter(&mxfep->mxfe_xmtlock);
+		/*
+		 * We only reset the chip if we think it shoudl be running.
+		 * This test is necessary to close a race with gld_stop.
+		 */
+		if (mxfep->mxfe_flags & MXFE_RUNNING) {
+			mxfe_stopmac(mxfep);
+			mxfe_startmac(mxfep);
+		}
+		mutex_exit(&mxfep->mxfe_xmtlock);
+		mutex_exit(&mxfep->mxfe_intrlock);
 	}
 	return (DDI_INTR_CLAIMED);
 }
@@ -2835,6 +2869,9 @@ mxfe_reclaim(mxfe_t *mxfep)
 	mxfe_desc_t	*tmdp;
 	int		freed = 0;
 
+	if ((mxfep->mxfe_flags & MXFE_RUNNING) == 0)
+		return;
+
 	for (;;) {
 		unsigned	status;
 		mxfe_buf_t	*bufp;
@@ -2926,7 +2963,7 @@ mxfe_reclaim(mxfe_t *mxfep)
 	}
 }
 
-static void
+static mblk_t *
 mxfe_read(mxfe_t *mxfep, int index)
 {
 	unsigned		status;
@@ -2947,7 +2984,7 @@ mxfe_read(mxfe_t *mxfep, int index)
 	if ((status & MXFE_RXSTAT_LAST) == 0) {
 		/* its an oversize packet!  ignore it for now */
 		DBG(MXFE_DRECV, "rx oversize packet");
-		return;
+		return (NULL);
 	}
 
 	if (status & MXFE_RXSTAT_DESCERR) {
@@ -3012,7 +3049,7 @@ mxfe_read(mxfe_t *mxfep, int index)
 		mxfep->mxfe_errrcv++;
 		/* packet was munged, drop it */
 		DBG(MXFE_DRECV, "dropping frame, status = 0x%x", status);
-		return;
+		return (NULL);
 	}
 
 	/* sync the buffer before we look at it */
@@ -3024,7 +3061,7 @@ mxfe_read(mxfe_t *mxfep, int index)
 	 */
 	if ((mp = allocb(length + MXFE_HEADROOM, BPRI_LO)) == NULL) {
 		mxfep->mxfe_norcvbuf++;
-		return;
+		return (NULL);
 	}
 
 	/* offset by headroom (should be 2 modulo 4), avoids bcopy in IP */
@@ -3032,7 +3069,7 @@ mxfe_read(mxfe_t *mxfep, int index)
 	bcopy((char *)bufp->bp_buf, mp->b_rptr, length);
 	mp->b_wptr = mp->b_rptr + length;
 
-	gld_recv(mxfep->mxfe_macinfo, mp);
+	return (mp);
 }
 
 /*
