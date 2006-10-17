@@ -1,4 +1,11 @@
-$Id: CHANGES,v 1.8 2006/08/08 00:32:56 gdamore Exp $
+$Id: CHANGES,v 1.9 2006/10/17 02:29:59 gdamore Exp $
+
+Changes in 1.0.8
+----------------
+	* corrected race with close, found by Sun QA in anticipation
+	  of commit to Solaris.
+	* make sure we kick the poll-demand register on ADMtek chips
+	  when finishing up receive (guard against rx stall).
 
 Changes in 1.0.7
 ----------------
