@@ -1,4 +1,8 @@
-$Id: CHANGES,v 1.9 2006/10/17 02:29:59 gdamore Exp $
+$Id: CHANGES,v 1.10 2006/11/17 19:02:32 gdamore Exp $
+
+Changes in 1.0.9
+----------------
+	* 1553426: postinstall script issue in 1.0.7 release
 
 Changes in 1.0.8
 ----------------
@@ -10,7 +14,7 @@ Changes in 1.0.8
 Changes in 1.0.7
 ----------------
 	* added interrupt kstats, which allows vmstat -i to show these
-	  devices.  Note that to avoid namespace collision, the interrupts
+ 	  devices.  Note that to avoid namespace collision, the interrupts
 	  are listed as "mxfecXX" and "afecXX".  This is similar to the way
 	  standard hme interfaces work.
 
