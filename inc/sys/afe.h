@@ -32,7 +32,7 @@
 #ifndef	_AFE_H
 #define	_AFE_H
 
-#ident	"@(#)$Id: afe.h,v 1.3 2005/11/27 01:10:30 gdamore Exp $"
+#ident	"@(#)$Id: afe.h,v 1.4 2007/02/23 02:56:30 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -197,6 +197,11 @@ extern "C" {
 #define	AFE_RX_PROMISC	0x00000040U	/* Receive any good packet */
 #define	AFE_RX_BAD	0x00000008U	/* Pass bad packets */
 #define	AFE_RX_ENABLE	0x00000002U	/* Enable receive */
+#define	AFE_NAR_TR	0x0000c000U	/* Transmit threshold mask */
+#define	AFE_NAR_TR_72	0x00000000U	/* 72 B (128 @ 100Mbps) tx thresh */
+#define	AFE_NAR_TR_96	0x00004000U	/* 96 B (256 @ 100Mbps) tx thresh */
+#define	AFE_NAR_TR_128	0x00008000U	/* 128 B (512 @ 100Mbps) tx thresh */
+#define	AFE_NAR_TR_160	0x0000c000U	/* 160 B (1K @ 100Mbsp) tx thresh */
 #define	AFE_NAR_SF	0x00200000U	/* store and forward */
 #define	AFE_NAR_HBD	0x00080000U	/* Disable SQE heartbeat */
 #define	AFE_NAR_FCOLL	0x00001000U	/* force collision */

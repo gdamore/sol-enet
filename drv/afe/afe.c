@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.12 2006/10/17 02:26:14 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.13 2007/02/23 02:56:30 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -98,6 +98,15 @@ static afe_card_t afe_cards[] = {
 	{ 0x1737, 0xab09, "Linksys PCM200", AFE_MODEL_CENTAUR },
 	{ 0x17b3, 0xab08, "Hawking PN672TX", AFE_MODEL_CENTAUR },
 };
+
+static uint32_t afe_txthresh[] = {
+	AFE_NAR_TR_72,	/* 72 bytes (10Mbps), 128 bytes (100Mbps) */
+	AFE_NAR_TR_96,	/* 96 bytes (10Mbps), 256 bytes (100Mbps) */
+	AFE_NAR_TR_128,	/* 128 bytes (10Mbps), 512 bytes (100Mbps) */
+	AFE_NAR_TR_160,	/* 160 bytes (10Mbps), 1024 bytes (100Mbps) */
+	AFE_NAR_SF	/* store and forward */
+};
+#define	AFE_MAX_TXTHRESH	(sizeof (afe_txthresh)/sizeof (uint32_t))
 
 /*
  * Function prototypes
@@ -310,7 +319,7 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.12 $";
+	char	*rev = "$Revision: 1.13 $";
 	char	*ident = afe_ident;
 
 	/* this technique works for both RCS and SCCS */
@@ -1985,7 +1994,8 @@ afe_stop(gld_mac_info_t *macinfo)
 static int
 afe_startmac(afe_t *afep)
 {
-	int	i;
+	int		i;
+	uint32_t	thresh;
 
 	/* FIXME: do the power management thing */
 
@@ -2073,6 +2083,12 @@ afe_startmac(afe_t *afep)
 
 	/* clear the lost packet counter (cleared on read) */
 	(void) GETCSR(afep, AFE_CSR_LPC);
+
+	/* program tx threshold bits */
+	CLRBIT(afep, AFE_CSR_NAR, AFE_NAR_TR | AFE_NAR_SF);
+	SETBIT(afep, AFE_CSR_NAR, afe_txthresh[afep->afe_txthresh]);
+	/* disable SQE test */
+	SETBIT(afep, AFE_CSR_NAR, AFE_NAR_HBD);
 
 	/* enable interrupts */
 	afe_enableinterrupts(afep);
@@ -2450,7 +2466,9 @@ afe_intr(gld_mac_info_t *macinfo)
 		}
 	}
 	if (status & AFE_INT_TXUNDERFLOW) {
-		afe_error(dip, "TX underflow detected");
+		afe_error(dip, "TX underflow detected, adjusting");
+		if (afep->afe_txthresh < AFE_MAX_TXTHRESH)
+			afep->afe_txthresh++;
 		reset = 1;
 	}
 	if (status & (AFE_INT_TXJABBER)) {
@@ -2507,6 +2525,7 @@ afe_intr(gld_mac_info_t *macinfo)
 		 */
 		if (afep->afe_flags & AFE_RUNNING) {
 			afe_stopmac(afep);
+			afe_resetmac(afep);
 			afe_startmac(afep);
 		}
 		mutex_exit(&afep->afe_xmtlock);

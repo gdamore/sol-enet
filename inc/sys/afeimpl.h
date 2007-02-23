@@ -32,7 +32,7 @@
 #ifndef	_AFEIMPL_H
 #define	_AFEIMPL_H
 
-#ident	"@(#)$Id: afeimpl.h,v 1.3 2006/08/08 00:11:08 gdamore Exp $"
+#ident	"@(#)$Id: afeimpl.h,v 1.4 2007/02/23 02:56:30 gdamore Exp $"
 
 #ifdef	_KERNEL
 
@@ -101,6 +101,7 @@ struct afe {
 	kmutex_t		afe_intrlock;
 	unsigned		afe_linkup;
 	ushort_t		afe_sromwidth;
+	ushort_t		afe_txthresh;	/* increasing values 0-4 */
 	int			afe_lastlinkdown;
 	ulong_t			afe_lastifspeed;
 	int			afe_lastduplex;
