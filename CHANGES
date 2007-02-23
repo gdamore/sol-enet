@@ -1,8 +1,11 @@
-$Id: CHANGES,v 1.10 2006/11/17 19:02:32 gdamore Exp $
+$Id: CHANGES,v 1.11 2007/02/23 02:58:38 gdamore Exp $
 
 Changes in 1.0.9
 ----------------
 	* 1553426: postinstall script issue in 1.0.7 release
+	* hard reset afe on error.
+	* dynamically adjust tx threshold as required.
+	* forcibly disable the SQE test.
 
 Changes in 1.0.8
 ----------------
