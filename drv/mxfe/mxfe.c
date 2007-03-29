@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the Macronix 98715
  *
- * Copyright (c) 2001-2006 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2007 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: mxfe.c,v 1.9 2006/10/17 02:26:15 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.c,v 1.10 2007/03/29 03:46:12 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -88,6 +88,16 @@ static mxfe_card_t mxfe_cards[] = {
 	{ 0x2646, 0x000b, 0, 0, "Kingston KNE111TX", MXFE_MODEL_PNICII },
 	{ 0x1154, 0x0308, 0, 0, "Buffalo LGY-PCI-TXL", MXFE_MODEL_98715AEC },
 };
+
+static uint32_t mxfe_txthresh[] = {
+	MXFE_NAR_TR_72,		/* 72 bytes (10Mbps), 128 bytes (100Mbps) */
+	MXFE_NAR_TR_96,		/* 96 bytes (10Mbps), 256 bytes (100Mbps) */
+	MXFE_NAR_TR_128,	/* 128 bytes (10Mbps), 512 bytes (100Mbps) */
+	MXFE_NAR_TR_160,	/* 160 bytes (10Mbps), 1024 bytes (100Mbps) */
+	MXFE_NAR_SF		/* store and forward */
+};
+#define MXFE_MAX_TXTHRESH        (sizeof (mxfe_txthresh)/sizeof (uint32_t))
+
 
 /*
  * Function prototypes
@@ -247,12 +257,10 @@ static struct dev_ops mxfe_devops = {
  * Module linkage information.
  */
 #define	MXFE_IDENT	"MXFE Fast Ethernet"
-static char mxfe_ident[MODMAXNAMELEN];
-static char *mxfe_version;
 
 static struct modldrv mxfe_modldrv = {
 	&mod_driverops,			/* drv_modops */
-	mxfe_ident,			/* drv_linkinfo */
+	MXFE_IDENT,			/* drv_linkinfo */
 	&mxfe_devops			/* drv_dev_ops */
 };
 
@@ -305,22 +313,6 @@ static uchar_t mxfe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.9 $";
-	char	*ident = mxfe_ident;
-
-        /* this technique works for both RCS and SCCS */
-	strcpy(ident, MXFE_IDENT " v");
-	ident += strlen(ident);
-	mxfe_version = ident;
-	while (*rev) {
-		if (strchr("0123456789.", *rev)) {
-			*ident = *rev;
-			ident++;
-			*ident = 0;
-		}
-		rev++;
-	}
-
 	return (mod_install(&mxfe_modlinkage));
 }
 
@@ -514,32 +506,6 @@ mxfe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	    "adv_10fdx_cap", 1);
 	mxfep->mxfe_adv_10hdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0,
 	    "adv_10hdx_cap", 1);
-
-	/*
-	 * Legacy properties.  These override newer properties, only
-	 * for ease of implementation.
-	 */
-	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "speed", 0)) {
-	case 100:
-		mxfep->mxfe_adv_10fdx = 0;
-		mxfep->mxfe_adv_10hdx = 0;
-		break;
-	case 10:
-		mxfep->mxfe_adv_100fdx = 0;
-		mxfep->mxfe_adv_100hdx = 0;
-		break;
-	}
-
-	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "full-duplex", -1)) {
-	case 1:
-		mxfep->mxfe_adv_10hdx = 0;
-		mxfep->mxfe_adv_100hdx = 0;
-		break;
-	case 0:
-		mxfep->mxfe_adv_10fdx = 0;
-		mxfep->mxfe_adv_100fdx = 0;
-		break;
-	}
 
 	DBG(MXFE_DPCI, "PCI vendor id = %x", venid);
 	DBG(MXFE_DPCI, "PCI device id = %x", devid);
@@ -2146,6 +2112,12 @@ mxfe_startmac(mxfe_t *mxfep)
 	/* clear the lost packet counter (cleared on read) */
 	(void) GETCSR(mxfep, MXFE_CSR_LPC);
 
+	/* program tx threshold bits */
+	CLRBIT(mxfep, MXFE_CSR_NAR, MXFE_NAR_TR | MXFE_NAR_SF);
+	SETBIT(mxfep, MXFE_CSR_NAR, mxfe_txthresh[mxfep->mxfe_txthresh]);
+	/* disable SQE test */
+	SETBIT(mxfep, MXFE_CSR_NAR, MXFE_NAR_HBD);
+
 	/* enable interrupts */
 	mxfe_enableinterrupts(mxfep);
 
@@ -2626,6 +2598,8 @@ mxfe_intr(gld_mac_info_t *macinfo)
 	}
 	if (status & MXFE_INT_TXUNDERFLOW) {
 		mxfe_error(dip, "TX underflow detected");
+		if (mxfep->mxfe_txthresh < MXFE_MAX_TXTHRESH)
+			mxfep->mxfe_txthresh++;
 		reset = 1;
 	}
 	if (status & MXFE_INT_TXJABBER) {
@@ -2680,6 +2654,7 @@ mxfe_intr(gld_mac_info_t *macinfo)
 		 */
 		if (mxfep->mxfe_flags & MXFE_RUNNING) {
 			mxfe_stopmac(mxfep);
+			mxfe_resetmac(mxfep);
 			mxfe_startmac(mxfep);
 		}
 		mutex_exit(&mxfep->mxfe_xmtlock);
@@ -3435,28 +3410,6 @@ mxfe_ndgetlinkmode(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
 }
 
 static int
-mxfe_ndgetsrom(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
-{
-	unsigned	val;
-	int		i;
-	char		buf[80];
-
-	for (i = 0; i < (1 << mxfep->mxfe_sromwidth); i++) {
-		val = mxfe_readsromword(mxfep, i);
-		sprintf(buf, "%s%04x", i % 8 ? " " : "", val);
-		mxfe_ndaddstr(mp, buf, ((i % 8) == 7) ? 1 : 0);
-	}
-	return (0);
-}
-
-static int
-mxfe_ndgetstring(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
-{
-	char	*s = (char *)ndp->nd_arg1;
-	return (mxfe_ndaddstr(mp, s ? s : "", 1));
-}
-
-static int
 mxfe_ndgetbit(mxfe_t *mxfep, mblk_t *mp, mxfe_nd_t *ndp)
 {
 	unsigned        val;
@@ -3513,13 +3466,9 @@ static void
 mxfe_ndinit(mxfe_t *mxfep)
 {
 	mxfe_ndadd(mxfep, "?", mxfe_ndquestion, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "model", mxfe_ndgetstring, NULL,
-	    (intptr_t)mxfep->mxfe_cardp->card_cardname, 0);
 	mxfe_ndadd(mxfep, "link_status", mxfe_ndgetlinkstatus, NULL, 0, 0);
 	mxfe_ndadd(mxfep, "link_speed", mxfe_ndgetlinkspeed, NULL, 0, 0);
 	mxfe_ndadd(mxfep, "link_mode", mxfe_ndgetlinkmode, NULL, 0, 0);
-	mxfe_ndadd(mxfep, "driver_version", mxfe_ndgetstring, NULL,
-	    (intptr_t)mxfe_version, 0);
 	mxfe_ndadd(mxfep, "adv_autoneg_cap", mxfe_ndgetadv, mxfe_ndsetadv,
 	    (intptr_t)mxfep->mxfe_adv_aneg, 0);
 	mxfe_ndadd(mxfep, "adv_100T4_cap", mxfe_ndgetadv, mxfe_ndsetadv,
@@ -3557,7 +3506,6 @@ mxfe_ndinit(mxfe_t *mxfep)
 	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_10HDX);
 	mxfe_ndadd(mxfep, "lp_10hdx_cap", mxfe_ndgetbit, NULL,
 	    (intptr_t)&mxfep->mxfe_anlpar, MII_ANEG_10HDX);
-	mxfe_ndadd(mxfep, "srom", mxfe_ndgetsrom, NULL, 0, 0);
 }
 
 /*

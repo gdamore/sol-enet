@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the ADMtek Centaur
  *
- * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2007 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 #ifndef	_AFE_H
 #define	_AFE_H
 
-#ident	"@(#)$Id: afe.h,v 1.4 2007/02/23 02:56:30 gdamore Exp $"
+#ident	"@(#)$Id: afe.h,v 1.5 2007/03/29 03:46:13 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {

@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the Macronix 98715
  *
- * Copyright (c) 2001-2005 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2007 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 #ifndef	_MXFE_H
 #define	_MXFE_H
 
-#ident	"@(#)$Id: mxfe.h,v 1.3 2005/11/27 01:10:30 gdamore Exp $"
+#ident	"@(#)$Id: mxfe.h,v 1.4 2007/03/29 03:46:13 gdamore Exp $"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -184,6 +184,12 @@ extern "C" {
 #define	MXFE_RX_PROMISC	0x00000040U	/* Receive any good packet */
 #define	MXFE_RX_BAD	0x00000008U	/* Pass bad packets */
 #define	MXFE_RX_ENABLE	0x00000002U	/* Enable receive */
+#define MXFE_NAR_TR	0x0000c000U	/* Transmit threshold mask */
+#define MXFE_NAR_TR_72	0x00000000U	/* 72 B (128 @ 100Mbps) tx thresh */
+#define MXFE_NAR_TR_96	0x00004000U	/* 96 B (256 @ 100Mbps) tx thresh */
+#define MXFE_NAR_TR_128	0x00008000U	/* 128 B (512 @ 100Mbps) tx thresh */
+#define MXFE_NAR_TR_160	0x0000c000U	/* 160 B (1K @ 100Mbsp) tx thresh */
+#define MXFE_NAR_SF	0x00200000U	/* store and forward */
 #define	MXFE_NAR_SCR	0x01000000U	/* scrambler mode */
 #define	MXFE_NAR_PCS	0x00800000U	/* set for forced 100 mbit */
 #define	MXFE_NAR_SPEED	0x00400000U	/* transmit threshold, set for 10bt */

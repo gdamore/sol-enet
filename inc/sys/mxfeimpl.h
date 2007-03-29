@@ -32,7 +32,7 @@
 #ifndef	_MXFEIMPL_H
 #define	_MXFEIMPL_H
 
-#ident	"@(#)$Id: mxfeimpl.h,v 1.3 2006/08/08 00:11:08 gdamore Exp $"
+#ident	"@(#)$Id: mxfeimpl.h,v 1.4 2007/03/29 03:46:13 gdamore Exp $"
 
 #ifdef	_KERNEL
 
@@ -97,14 +97,15 @@ struct mxfe {
 	dev_info_t		*mxfe_dip;
 	gld_mac_info_t		*mxfe_macinfo;
 	mxfe_card_t		*mxfe_cardp;
-	ushort			mxfe_cachesize;
+	ushort_t		mxfe_cachesize;
 	int			mxfe_flags;
 	kmutex_t		mxfe_xmtlock;
 	kmutex_t		mxfe_intrlock;
-	ushort			mxfe_sromwidth;
+	ushort_t		mxfe_sromwidth;
+	ushort_t		mxfe_txthresh;	/* increasing values 0-4 */
 	int			mxfe_linkstate;
 	int			mxfe_lastlinkdown;
-	u_longlong_t		mxfe_lastifspeed;
+	unsigned		mxfe_lastifspeed;
 	int			mxfe_lastduplex;
 	/*
 	 * Buffer management.

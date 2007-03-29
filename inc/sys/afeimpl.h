@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the ADMtek Centaur
  *
- * Copyright (c) 2001-2004 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2007 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 #ifndef	_AFEIMPL_H
 #define	_AFEIMPL_H
 
-#ident	"@(#)$Id: afeimpl.h,v 1.4 2007/02/23 02:56:30 gdamore Exp $"
+#ident	"@(#)$Id: afeimpl.h,v 1.5 2007/03/29 03:46:13 gdamore Exp $"
 
 #ifdef	_KERNEL
 
@@ -103,7 +103,7 @@ struct afe {
 	ushort_t		afe_sromwidth;
 	ushort_t		afe_txthresh;	/* increasing values 0-4 */
 	int			afe_lastlinkdown;
-	ulong_t			afe_lastifspeed;
+	unsigned		afe_lastifspeed;
 	int			afe_lastduplex;
 	int			afe_forcefiber;
 	int			afe_forcephy;
@@ -117,7 +117,7 @@ struct afe {
 	 * Multicast table.
 	 */
 	ushort_t		afe_mccount[AFE_MCHASH];
-	unsigned		afe_mctab[AFE_MCHASH / sizeof (unsigned)];
+	unsigned		afe_mctab[AFE_MCHASH / 32];
 	/*
 	 * Buffer management.
 	 */

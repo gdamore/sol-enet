@@ -1,6 +1,6 @@
 <!DOCTYPE REFENTRY PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
 ]>
-<!-- @(#)$Id: mxfe.7d.in,v 1.2 2004/08/28 06:09:46 gdamore Exp $ -->
+<!-- @(#)$Id: mxfe.7d.in,v 1.3 2007/03/29 03:46:13 gdamore Exp $ -->
 <refentry id="mxfe-7d">
 <refmeta>
 	<refentrytitle>mxfe</refentrytitle>
@@ -136,7 +136,7 @@ at <literal>http://sol-enet.sourceforge.net/</literal>.
 
 <refsect1><title>COPYRIGHT</title>
 <para>
-Copyright (c) 2001-2004 by Garrett D'Amore
+Copyright (c) 2001-2007 by Garrett D'Amore
 &lt;<literal>garrett@damore.org</literal>&gt;.
 All rights reserved.
 </para>

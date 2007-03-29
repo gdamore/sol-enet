@@ -1,7 +1,7 @@
 /*
  * Solaris DLPI driver for ethernet cards based on the ADMtek Centaur
  *
- * Copyright (c) 2001-2006 by Garrett D'Amore <garrett@damore.org>.
+ * Copyright (c) 2001-2007 by Garrett D'Amore <garrett@damore.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.13 2007/02/23 02:56:30 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.14 2007/03/29 03:46:12 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -42,6 +42,7 @@
 #include <sys/ethernet.h>
 #include <sys/kmem.h>
 #include <sys/gld.h>
+#include <sys/crc32.h>
 #include <sys/ddi.h>
 #include <sys/sunddi.h>
 #include <sys/mii.h>
@@ -132,7 +133,7 @@ static int	afe_allocrings(afe_t *);
 static void	afe_freerings(afe_t *);
 static afe_buf_t	*afe_getbuf(afe_t *, int);
 static void	afe_freebuf(afe_buf_t *);
-static unsigned	afe_etherhashbe(uchar_t *);
+static unsigned	afe_etherhashle(uchar_t *);
 static int	afe_msgsize(mblk_t *);
 static void	afe_miocack(queue_t *, mblk_t *, uint8_t, int, int);
 static void	afe_error(dev_info_t *, char *, ...);
@@ -261,12 +262,10 @@ static struct dev_ops afe_devops = {
  * Module linkage information.
  */
 #define	AFE_IDENT	"AFE Fast Ethernet"
-static char afe_ident[MODMAXNAMELEN];
-static char *afe_version;
 
 static struct modldrv afe_modldrv = {
 	&mod_driverops,			/* drv_modops */
-	afe_ident,			/* drv_linkinfo */
+	AFE_IDENT,			/* drv_linkino */
 	&afe_devops			/* drv_dev_ops */
 };
 
@@ -319,22 +318,6 @@ static uchar_t afe_broadcast_addr[ETHERADDRL] = {
 int
 _init(void)
 {
-	char	*rev = "$Revision: 1.13 $";
-	char	*ident = afe_ident;
-
-	/* this technique works for both RCS and SCCS */
-	strcpy(ident, AFE_IDENT " v");
-	ident += strlen(ident);
-	afe_version = ident;
-	while (*rev) {
-		if (strchr("0123456789.", *rev)) {
-			*ident = *rev;
-			ident++;
-			*ident = 0;
-		}
-		rev++;
-	}
-
 	return (mod_install(&afe_modlinkage));
 }
 
@@ -531,32 +514,6 @@ afe_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	    0, "adv_10fdx_cap", 1);
 	afep->afe_adv_10hdx = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
 	    0, "adv_10hdx_cap", 1);
-
-	/*
-	 * Legacy properties.  These override newer properties, only
-	 * for ease of implementation.
-	 */
-	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "speed", 0)) {
-	case 100:
-		afep->afe_adv_10fdx = 0;
-		afep->afe_adv_10hdx = 0;
-		break;
-	case 10:
-		afep->afe_adv_100fdx = 0;
-		afep->afe_adv_100hdx = 0;
-		break;
-	}
-
-	switch (ddi_prop_get_int(DDI_DEV_T_ANY, dip, 0, "full-duplex", -1)) {
-	case 1:
-		afep->afe_adv_10hdx = 0;
-		afep->afe_adv_100hdx = 0;
-		break;
-	case 0:
-		afep->afe_adv_10fdx = 0;
-		afep->afe_adv_100fdx = 0;
-		break;
-	}
 
 	afep->afe_forcefiber = ddi_prop_get_int(DDI_DEV_T_ANY, dip,
 	    0, "fiber", 0);
@@ -840,13 +797,12 @@ static int
 afe_mcadd(afe_t *afep, unsigned char *macaddr)
 {
 	unsigned	hash;
-	int		changed = 0;
+	int		changed;
 
-	hash = afe_etherhashbe(macaddr) % AFE_MCHASH;
+	hash = afe_etherhashle(macaddr) % AFE_MCHASH;
 
 	if ((afep->afe_mccount[hash]) == 0) {
-		afep->afe_mctab[hash / sizeof (unsigned)] |=
-		    (1 << (hash % sizeof (unsigned)));
+		afep->afe_mctab[hash / 32] |= (1 << (hash % 32));
 		changed++;
 	}
 	afep->afe_mccount[hash]++;
@@ -859,11 +815,10 @@ afe_mcdelete(afe_t *afep, unsigned char *macaddr)
 	unsigned	hash;
 	int		changed = 0;
 
-	hash = afe_etherhashbe(macaddr) % AFE_MCHASH;
+	hash = afe_etherhashle(macaddr) % AFE_MCHASH;
 
 	if ((afep->afe_mccount[hash]) == 1) {
-		afep->afe_mctab[hash / sizeof (unsigned)] &=
-		    ~(1 << (hash % sizeof (unsigned)));
+		afep->afe_mctab[hash / 32] &= ~(1 << (hash % 32));
 		changed++;
 	}
 	afep->afe_mccount[hash]--;
@@ -1933,24 +1888,18 @@ afe_miiwritecomet(afe_t *afep, int phy, int reg, ushort val)
  * which are used to set up the multicast filter.
  */
 static unsigned
-afe_etherhashbe(uchar_t *addrp)
+afe_etherhashle(uchar_t *addrp)
 {
 	unsigned	hash = 0xffffffffU;
-	unsigned	carry;
 	int		byte;
 	int		bit;
 	uchar_t		curr;
-	static unsigned	poly = 0x04c11db6U;
+	static unsigned	poly = 0xedb88320;
 
 	for (byte = 0; byte < ETHERADDRL; byte++) {
 		curr = addrp[byte];
 		for (bit = 0; bit < 8; bit++, curr >>= 1) {
-			carry = ((hash & 0x80000000U) ? 1 : 0) ^ (curr & 0x1);
-			hash <<= 1;
-			curr >>= 1;
-			if (carry) {
-				hash = (hash ^ poly) | carry;
-			}
+			hash = (hash >> 1) ^ (((hash ^ curr) & 1) ? poly : 0);
 		}
 	}
 	return (hash);
@@ -3219,28 +3168,6 @@ afe_ndgetlinkmode(afe_t *afep, mblk_t *mp, afe_nd_t *ndp)
 }
 
 static int
-afe_ndgetsrom(afe_t *afep, mblk_t *mp, afe_nd_t *ndp)
-{
-	unsigned	val;
-	int		i;
-	char		buf[80];
-
-	for (i = 0; i < (1 << afep->afe_sromwidth); i++) {
-		val = afe_readsromword(afep, i);
-		sprintf(buf, "%s%04x", i % 8 ? " " : "", val);
-		afe_ndaddstr(mp, buf, ((i % 8) == 7) ? 1 : 0);
-	}
-	return (0);
-}
-
-static int
-afe_ndgetstring(afe_t *afep, mblk_t *mp, afe_nd_t *ndp)
-{
-	char	*s = (char *)ndp->nd_arg1;
-	return (afe_ndaddstr(mp, s ? s : "", 1));
-}
-
-static int
 afe_ndgetmiibit(afe_t *afep, mblk_t *mp, afe_nd_t *ndp)
 {
 	unsigned	val;
@@ -3306,13 +3233,9 @@ static void
 afe_ndinit(afe_t *afep)
 {
 	afe_ndadd(afep, "?", afe_ndquestion, NULL, 0, 0);
-	afe_ndadd(afep, "model", afe_ndgetstring, NULL,
-	    (intptr_t)afep->afe_cardp->card_cardname, 0);
 	afe_ndadd(afep, "link_status", afe_ndgetlinkstatus, NULL, 0, 0);
 	afe_ndadd(afep, "link_speed", afe_ndgetlinkspeed, NULL, 0, 0);
 	afe_ndadd(afep, "link_mode", afe_ndgetlinkmode, NULL, 0, 0);
-	afe_ndadd(afep, "driver_version", afe_ndgetstring, NULL,
-	    (intptr_t)afe_version, 0);
 	afe_ndadd(afep, "adv_autoneg_cap", afe_ndgetadv, afe_ndsetadv,
 	    (intptr_t)&afep->afe_adv_aneg, 0);
 	afe_ndadd(afep, "adv_100T4_cap", afe_ndgetadv, afe_ndsetadv,
@@ -3349,7 +3272,6 @@ afe_ndinit(afe_t *afep)
 	    MII_REG_ANLPAR, MII_ANEG_10FDX);
 	afe_ndadd(afep, "lp_10hdx_cap", afe_ndgetmiibit, NULL,
 	    MII_REG_ANLPAR, MII_ANEG_10HDX);
-	afe_ndadd(afep, "srom", afe_ndgetsrom, NULL, 0, 0);
 }
 
 /*
@@ -3398,7 +3320,7 @@ afe_dprintf(afe_t *afep, const char *func, int level, char *fmt, ...)
 			sprintf(tag, "%s", AFE_IDNAME);
 		}
 
-		sprintf(buf, "%s: %s: %s", tag, func, fmt);
+		sprintf(buf, "%s: %s: %s\n", tag, func, fmt);
 
 		vcmn_err(CE_CONT, buf, ap);
 	}

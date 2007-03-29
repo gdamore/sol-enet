@@ -1,10 +1,20 @@
-$Id: CHANGES,v 1.11 2007/02/23 02:58:38 gdamore Exp $
+$Id: CHANGES,v 1.12 2007/03/29 03:46:12 gdamore Exp $
+
+Changes in 1.0.10
+-----------------
+	* new (fixed, hopefully) multicast hashing code for afe
+	* removed legacy full-duplex and speed driver.conf properties
+	* hard reset mxfe on error
+	* dynamically adjust tx threshold as required (mxfe)
+	* minor nits in man pages
+	* minor perf. tweaks
+	* really fix the afe multicast code (tested this time!)
 
 Changes in 1.0.9
 ----------------
 	* 1553426: postinstall script issue in 1.0.7 release
 	* hard reset afe on error.
-	* dynamically adjust tx threshold as required.
+	* dynamically adjust tx threshold as required (afe)
 	* forcibly disable the SQE test.
 
 Changes in 1.0.8

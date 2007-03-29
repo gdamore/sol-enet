@@ -1,6 +1,6 @@
 <!DOCTYPE REFENTRY PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
 ]>
-<!-- @(#)$Id: afe.7d.in,v 1.2 2004/08/27 23:37:47 gdamore Exp $ -->
+<!-- @(#)$Id: afe.7d.in,v 1.3 2007/03/29 03:46:13 gdamore Exp $ -->
 <refentry id="afe-7d">
 <refmeta>
 	<refentrytitle>afe</refentrytitle>
@@ -9,7 +9,7 @@
 	<refmiscinfo class="sectdesc">Drivers</refmiscinfo>
 	<refmiscinfo class="software">%PKG% %VERSION%</refmiscinfo>
 	<refmiscinfo class="arch">generic</refmiscinfo>
-	<refmiscinfo class="copyright">Copyright (c) 2001-2004 by Garrett D'Amore.  All Rights Reserved</refmiscinfo>
+	<refmiscinfo class="copyright">Copyright (c) 2001-2007 by Garrett D'Amore.  All Rights Reserved</refmiscinfo>
 </refmeta>
 <refnamediv>
 	<refname>afe</refname>
@@ -100,12 +100,12 @@ used when the link partner is a 10 Mbps hub, or is an older network
 card.)  </para></listitem></varlistentry>
 
 <varlistentry><term><literal>fiber</literal></term>
-<listitem><para>Specifies that the fiber port on certain fiber based
+<listitem><para>Specifies that the fiber port on certain fiber based cards
 be used (when set to one).  This may be useful for users of cards like
 the 3M VOL-N100VF+TX.  Cards with twisted pair only ports should not
 change this setting from its default value of zero.  (Note that this
 setting is experimental, and currently only 100 Mbps full duplex
-operationis supported on fiber links.)
+operation is supported on fiber links.)
 </para></listitem></varlistentry>
 
 </variablelist>
@@ -146,7 +146,7 @@ at <literal>http://sol-enet.sourceforge.net/</literal>.
 
 <refsect1><title>COPYRIGHT</title>
 <para>
-Copyright (c) 2001-2004 by Garrett D'Amore
+Copyright (c) 2001-2007 by Garrett D'Amore
 &lt;<literal>garrett@damore.org</literal>&gt;.
 All rights reserved.
 </para>
