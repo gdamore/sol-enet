@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident	"@(#)$Id: afe.c,v 1.14 2007/03/29 03:46:12 gdamore Exp $"
+#ident	"@(#)$Id: afe.c,v 1.15 2007/03/29 03:49:41 gdamore Exp $"
 
 #include <sys/varargs.h>
 #include <sys/types.h>
@@ -42,7 +42,6 @@
 #include <sys/ethernet.h>
 #include <sys/kmem.h>
 #include <sys/gld.h>
-#include <sys/crc32.h>
 #include <sys/ddi.h>
 #include <sys/sunddi.h>
 #include <sys/mii.h>
